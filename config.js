@@ -3,7 +3,7 @@
 
 const CONFIG = {
     // วาง URL ที่ได้จากการ Deploy Google Apps Script ล่าสุดที่นี่
-    SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwXo5B2aGpreIz33_AHWZqZo1Fay_S_JHeYFD2Qu1vyt-urwSAPfM7qfh_PdfB_mwQ6/exec"
+    SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxdSNJQbErfVYrnoTCtaGL2ZR3mLMaknx6PEDmo8oDqPhsyB6a8tFvPTTSr34QQ6eSd/exec"
 };
 
 // ==========================================
