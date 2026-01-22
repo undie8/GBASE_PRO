@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Debt Manager</title>
+    <script>
+        // ถ้า URL ลงท้ายด้วย .html ให้ลบออกทันที
+        if (window.location.pathname.endsWith('.html')) {
+            var newUrl = window.location.pathname.replace('.html', '');
+            window.history.replaceState(null, '', newUrl);
+        }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        if (sessionStorage.getItem('gbase_unlocked') !== 'true') {
+            window.location.href = 'index.html';
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Kanit', sans-serif; background-color: #0f172a; color: #e2e8f0; }
+        .input-dark { background-color: #1e293b; border: 1px solid #334155; color: white; outline: none; font-size: 11px !important; height: 28px !important; }
+        .tab-btn.active { border-bottom: 2px solid #f97316; color: #f97316; background-color: rgba(30, 41, 59, 0.5); }
+        .custom-checkbox { width: 18px; height: 18px; accent-color: #ef4444; cursor: pointer; }
+        
+        #loader { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; }
+        .spinner { width: 25px; height: 25px; border: 3px solid rgba(249, 115, 22, 0.1); border-top: 3px solid #f97316; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .sync-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; color: #94a3b8; background: rgba(30, 41, 59, 0.5); padding: 2px 8px; border-radius: 99px; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .sync-dot { width: 6px; height: 6px; background-color: #f97316; border-radius: 50%; display: inline-block; }
+        .syncing .sync-dot { animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
+
+        .month-picker-btn { display: inline-flex; align-items: center; justify-content: center; background: rgba(30, 41, 59, 0.8); padding: 6px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; position: relative; min-width: 140px; }
+        .month-label-text { font-size: 14px; font-weight: 600; color: #f97316; }
+        .month-input-real { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+        
+        .quick-card { background: rgba(30, 41, 59, 0.5); border-radius: 12px; padding: 8px 10px; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .quick-card-title { font-size: 11px; font-weight: 600; color: #fff; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .form-single-row { display: grid; grid-template-columns: 1.3fr 1.1fr 0.5fr minmax(75px, auto) 36px; gap: 4px; align-items: center; }
+        .input-compact { background: #1e293b; border: 1px solid #334155; color: white; font-size: 10px !important; height: 30px !important; border-radius: 6px; padding: 0 4px !important; width: 100%; outline: none; }
+        .btn-check-compact { height: 30px; background: #f97316; color: white; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; }
+        
+        .card-debt { background: rgba(30, 41, 59, 0.7); border-radius: 1rem; border-left: 4px solid #ef4444; padding: 8px 12px !important; }
+        .card-debt.paid { border-left-color: #22c55e; opacity: 0.8; }
+        
+        .btn-save-all { background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-weight: bold; padding: 10px; border-radius: 12px; width: 100%; margin-bottom: 12px; font-size: 13px; display: none; }
+        .btn-delete-selected { background: #ef4444; color: white; font-weight: bold; padding: 6px 12px; border-radius: 8px; font-size: 10px; display: none; }
+        .btn-pay-selected { background: #3b82f6; color: white; font-weight: bold; padding: 6px 12px; border-radius: 8px; font-size: 10px; display: none; margin-right: 5px; }
+        
+        .limit-info-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 6px; }
+        .limit-box { background: rgba(15, 23, 42, 0.4); padding: 4px; border-radius: 6px; text-align: center; }
+        .limit-label { font-size: 7px; color: #64748b; text-transform: uppercase; margin-bottom: 2px; }
+        .limit-value { font-size: 10px; font-weight: bold; }
+        .update-date { font-size: 9px; color: #64748b; margin-top: 8px; font-style: italic; text-align: right; }
+    </style>
+</head>
+<body>
+    <div id="loader"><div class="spinner mb-2"></div><p class="text-orange-400 text-[10px]">Processing...</p></div>
+
+  <div class="bg-slate-900 px-4 py-3 flex items-center justify-between border-b border-gray-800 sticky top-0 z-10 relative">
+        <a href="index.html" class="flex items-center text-gray-400 hover:text-white z-20">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span class="text-xs font-bold uppercase tracking-wider">Back</span>
+        </a>
+
+        <h1 class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-lg font-bold text-orange-500 tracking-wider whitespace-nowrap">
+            DEBT MANAGER
+        </h1>
+
+        <div id="syncStatus" class="sync-badge hidden z-20">
+            <span class="sync-dot"></span> <span id="syncText">Syncing...</span>
+        </div>
+    </div>
+
+    <div id="mainApp" class="p-2 max-w-lg mx-auto pb-20">
+        <div class="bg-slate-800/80 p-4 rounded-[1.5rem] border border-white/5 mb-3 text-center shadow-lg mt-2">
+            <p class="text-gray-400 text-[12px] uppercase tracking-widest mb-1">ยอดหนี้ค้างจ่าย (เดือนนี้)</p>
+            <h1 id="headerNet" class="text-xl font-bold text-orange-400 mb-2 tracking-tighter">฿0.00</h1>
+            <div class="grid grid-cols-2 gap-1 border-t border-white/5 pt-2">
+                <div><p class="text-[8px] text-gray-500 uppercase">รายรับเดือนนี้</p><p id="headerInc" class="text-green-400 font-bold text-xs">฿0.00</p></div>
+                <div class="border-l border-white/5"><p class="text-[8px] text-gray-500 uppercase">หนี้บัตรคงค้าง (รวม)</p><p id="headerAccumDebt" class="text-red-400 font-bold text-xs">฿0.00</p></div>
+            </div>
+        </div>
+
+        <nav class="flex bg-slate-900/50 rounded-lg p-0.5 mb-3 border border-gray-800">
+            <button onclick="switchTab('debt')" id="tab-debt" class="tab-btn active flex-1 py-1.5 text-[10px]">🏠 บิล</button>
+            <button onclick="switchTab('income')" id="tab-income" class="tab-btn flex-1 py-1.5 text-[10px]">💰 รายรับ</button>
+            <button onclick="switchTab('history')" id="tab-history" class="tab-btn flex-1 py-1.5 text-[10px]">📊 สถิติ</button>
+            <button onclick="switchTab('setting')" id="tab-setting" class="tab-btn flex-1 py-1.5 text-[10px]">💳 บัตร/หนี้</button>
+        </nav>
+
+        <div id="view-debt">
+            <div class="bg-slate-800/40 p-3 rounded-xl border border-gray-700/50 mb-2 relative">
+                <div class="flex justify-center mb-2">
+                    <div class="month-picker-btn" onclick="openPicker('debtMonth')">
+                        <span class="month-label-text" id="displayMonthLabel"></span>
+                        <input type="month" id="debtMonth" onchange="fetchData()" class="month-input-real">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-1 text-center">
+                    <div><p class="text-[7px] text-gray-500 uppercase">บิลเดือนนี้</p><p class="text-[11px] font-bold text-white" id="subTotalAll">0</p></div>
+                    <div class="border-x border-gray-700/50"><p class="text-[7px] text-green-600 uppercase">จ่ายแล้ว</p><p class="text-[11px] font-bold text-green-400" id="subTotalPaid">0</p></div>
+                    <div><p class="text-[7px] text-orange-600 uppercase">ค้างจ่าย</p><p class="text-[11px] font-bold text-orange-400" id="subTotalRem">0</p></div>
+                </div>
+            </div>
+            <div id="quickAddList" class="space-y-2 mb-4"></div>
+            <button id="btnSaveAll" onclick="saveAll()" class="btn-save-all">💾 บันทึกที่กรอกทั้งหมด</button>
+            <div class="flex justify-between items-center mb-2 px-1">
+                <p class="text-[10px] text-gray-500 font-bold uppercase">รายการบิล/หนี้</p>
+                <div class="flex">
+                    <button id="btnPaySelectedDebt" onclick="payBulk()" class="btn-pay-selected">💰 จ่ายที่เลือก</button>
+                    <button id="btnDelSelectedDebt" onclick="deleteBulk('deleteTransaction', 'debt-cb')" class="btn-delete-selected">🗑️ ลบที่เลือก</button>
+                </div>
+            </div>
+            <div id="debtList" class="space-y-1.5 min-h-[50px]"></div>
+        </div>
+
+        <div id="view-income" class="hidden">
+            <div class="bg-slate-800/40 p-3 rounded-xl border border-gray-700/50 mb-3 relative text-center">
+                <div class="flex justify-center">
+                    <div class="month-picker-btn" onclick="openPicker('incomeMonth')">
+                        <span class="month-label-text" id="displayMonthLabelIncome"></span>
+                        <input type="month" id="incomeMonth" onchange="fetchData()" class="month-input-real">
+                    </div>
+                </div>
+            </div>
+            <div class="quick-card mb-4">
+                <div class="quick-card-title">บันทึกรายรับใหม่</div>
+                <div class="form-single-row" style="grid-template-columns: 1.2fr 1.2fr 0.6fr 40px;">
+                    <select id="incType" class="input-compact"><option value="เงินเดือน">💼 เงินเดือน</option><option value="รายได้เสริม">🚀 รายได้เสริม</option><option value="อื่นๆ">💰 อื่นๆ</option></select>
+                    <input type="text" id="incVal" placeholder="ยอดเงิน" class="input-compact font-bold" oninput="formatCurrency(this)">
+                    <input type="number" id="incDay" placeholder="วัน" class="input-compact text-center" min="1" max="31">
+                    <div onclick="saveInc()" class="btn-check-compact bg-green-600">✔</div>
+                </div>
+            </div>
+            <div class="flex justify-between items-center mb-2 px-1">
+                <p class="text-[10px] text-gray-500 font-bold uppercase">รายการรายรับ</p>
+                <button id="btnDelSelectedInc" onclick="deleteBulk('deleteIncome', 'inc-cb')" class="btn-delete-selected">🗑️ ลบที่เลือก</button>
+            </div>
+            <div id="incomeList" class="space-y-1.5"></div>
+        </div>
+
+        <div id="view-history" class="hidden">
+            <div class="flex justify-center gap-2 mb-3 bg-slate-800/50 p-2 rounded-xl border border-gray-700">
+                <div class="flex flex-col">
+                    <label class="text-[8px] text-gray-400 pl-1">ตั้งแต่</label>
+                    <input type="month" id="histStart" class="input-compact text-center h-8" onchange="renderHistoryWithFilter()">
+                </div>
+                <div class="flex items-center text-gray-500 pt-3">-</div>
+                <div class="flex flex-col">
+                    <label class="text-[8px] text-gray-400 pl-1">ถึง</label>
+                    <input type="month" id="histEnd" class="input-compact text-center h-8" onchange="renderHistoryWithFilter()">
+                </div>
+            </div>
+
+            <div id="historySummary" class="bg-slate-800/80 p-3 rounded-xl border border-white/5 mb-4 shadow-lg grid grid-cols-2 gap-2 text-center">
+                </div>
+
+            <div class="bg-slate-800/50 p-2 rounded-xl border border-gray-700 h-56 mb-3">
+                <canvas id="myChart"></canvas>
+            </div>
+            <div id="historyList" class="space-y-1.5"></div>
+        </div>
+        
+        <div id="view-setting" class="hidden">
+            <div class="bg-slate-800/80 p-3 rounded-xl border border-white/5 mb-4 shadow-lg">
+                <h2 class="text-[10px] text-gray-400 font-bold uppercase mb-2 text-center tracking-wider">ภาพรวมวงเงินทั้งหมด</h2>
+                <div class="grid grid-cols-3 gap-1 text-center divide-x divide-gray-700">
+                      <div><p class="text-[8px] text-gray-500 uppercase mb-0.5">วงเงินที่ได้รับ</p><p id="sumCardLimit" class="text-xs font-bold text-blue-400">0</p></div>
+                      <div><p class="text-[8px] text-gray-500 uppercase mb-0.5">ใช้ไปทั้งหมด</p><p id="sumCardUsed" class="text-xs font-bold text-red-400">0</p></div>
+                      <div><p class="text-[8px] text-gray-500 uppercase mb-0.5">คงเหลือสุทธิ</p><p id="sumCardRem" class="text-xs font-bold text-green-400">0</p></div>
+                </div>
+            </div>
+            <div class="text-[10px] text-gray-500 font-bold uppercase mb-3 px-1">จัดการรายชื่อบัตร / วงเงิน</div>
+            <form id="cardForm" class="bg-slate-800/40 p-3 rounded-xl border border-white/5 mb-4 shadow-lg">
+                <input type="text" id="newCard" placeholder="ชื่อบัตร/เจ้าหนี้..." class="input-compact mb-2">
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <div><label class="text-[8px] text-gray-400 ml-1">วงเงินที่ได้รับ</label><input type="text" id="newCardLimit" placeholder="0.00" class="input-compact" oninput="formatCurrency(this)"></div>
+                    <div><label class="text-[8px] text-gray-400 ml-1">วงเงินคงเหลือ</label><input type="text" id="newCardRem" placeholder="0.00" class="input-compact" oninput="formatCurrency(this)"></div>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 py-2 rounded-lg font-bold text-xs text-white">➕ เพิ่มข้อมูลบัตร</button>
+            </form>
+            <div id="cardList" class="space-y-1.5"></div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        const CACHE_KEY = 'gbase_money_data_cache';
+        
+        let globalData = { cards:[], transactions:[], income:[], history:{} };
+        const monthsTh = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+        window.onload = function() {
+            const now = new Date();
+            const currentMonth = now.toISOString().substring(0, 7);
+            
+            document.getElementById('debtMonth').value = currentMonth;
+            document.getElementById('incomeMonth').value = currentMonth;
+
+            const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+            const startMonthStr = sixMonthsAgo.toISOString().substring(0, 7);
+            document.getElementById('histStart').value = startMonthStr;
+            document.getElementById('histEnd').value = currentMonth;
+
+            const cachedData = localStorage.getItem(CACHE_KEY);
+            if (cachedData) {
+                try {
+                    globalData = JSON.parse(cachedData);
+                    renderApp();
+                    fetchData(true);
+                } catch(e) { fetchData(false); }
+            } else {
+                fetchData(false);
+            }
+        };
+
+        async function fetchData(isBackground = false) { 
+            if (!isBackground) showLoader(true); 
+            if (isBackground) showSyncStatus(true);
+
+            try { 
+                let selectedMonth;
+                const incomeView = document.getElementById('view-income');
+                if (incomeView && !incomeView.classList.contains('hidden')) { selectedMonth = document.getElementById('incomeMonth').value; } 
+                else { selectedMonth = document.getElementById('debtMonth').value; }
+                if (!selectedMonth) selectedMonth = new Date().toISOString().substring(0, 7);
+                document.getElementById('debtMonth').value = selectedMonth;
+                document.getElementById('incomeMonth').value = selectedMonth;
+                
+                if (typeof CONFIG === 'undefined' || !CONFIG.SCRIPT_URL) return;
+
+                const res = await fetch(CONFIG.SCRIPT_URL + '?get=data&month=' + selectedMonth + '&t=' + new Date().getTime()); 
+                const rawData = await res.json(); 
+                
+                const data = (typeof rawData === 'string') ? JSON.parse(rawData) : rawData;
+                globalData = data;
+                
+                localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+                renderApp(); 
+            } catch (e) { 
+                console.error("Fetch Error:", e);
+                if (!isBackground) Swal.fire({icon:'error', title:'โหลดข้อมูลไม่สำเร็จ', text:'กรุณาเช็คการเชื่อมต่อ'});
+            } 
+            finally { showLoader(false); showSyncStatus(false); } 
+        }
+
+        function showSyncStatus(show) {
+            const el = document.getElementById('syncStatus');
+            const txt = document.getElementById('syncText');
+            if(show) {
+                el.classList.remove('hidden'); el.classList.add('syncing'); txt.innerText = "Syncing...";
+            } else {
+                el.classList.remove('syncing'); txt.innerText = "Updated";
+                setTimeout(() => { el.classList.add('hidden'); }, 2000);
+            }
+        }
+
+        function formatThaiMonth(dateStr) { 
+            if (!dateStr || typeof dateStr !== 'string' || !dateStr.includes('-')) return dateStr || ""; 
+            const [y, m] = dateStr.split("-"); 
+            return `${monthsTh[parseInt(m)-1]} ${parseInt(y)+543}`; 
+        }
+        function formatDateTh(val) {
+            if(!val) return "-";
+            if(typeof val === 'string' && val.includes('/') && !val.includes('T')) return val; 
+            try {
+                const d = new Date(val);
+                if (isNaN(d.getTime())) return val;
+                const day = d.getDate();
+                const month = monthsTh[d.getMonth()];
+                const year = d.getFullYear() + 543;
+                return `${day} ${month} ${year}`;
+            } catch(e) { return val; }
+        }
+        function safeStr(val) { return (val === null || val === undefined) ? "" : String(val); }
+        function safeNum(val) { return parseFloat(safeStr(val).replace(/,/g,'') || 0); }
+        function safeEsc(str) { return safeStr(str).replace(/'/g, "\\'").replace(/"/g, "&quot;"); }
+
+        function renderApp() {
+            try {
+                const selMonth = document.getElementById('debtMonth').value;
+                const incMonth = document.getElementById('incomeMonth').value;
+                document.getElementById('displayMonthLabel').innerText = formatThaiMonth(selMonth);
+                document.getElementById('displayMonthLabelIncome').innerText = formatThaiMonth(incMonth);
+                
+                let totalInc = 0; 
+                (globalData.income || []).forEach(i => { if (i.month === selMonth) totalInc += safeNum(i.amount); });
+                
+                let totalBillThisMonth = 0, totalPaid = 0, totalOutstanding = 0;
+                const transactions = (globalData.transactions || []);
+                transactions.forEach(t => {
+                    if (t.month === selMonth) { 
+                        const bill = safeNum(t.total);
+                        const paid = safeNum(t.paid);
+                        totalBillThisMonth += bill;
+                        totalPaid += paid;
+                        if (bill > paid) { totalOutstanding += (bill - paid); }
+                    }
+                });
+                let totalCardDebt = 0; (globalData.cards || []).forEach(c => { totalCardDebt += safeNum(c.used); });
+                document.getElementById('headerInc').innerText = `฿${totalInc.toLocaleString()}`;
+                document.getElementById('headerAccumDebt').innerText = `฿${totalCardDebt.toLocaleString()}`;
+                document.getElementById('headerNet').innerText = `฿${totalOutstanding.toLocaleString()}`;
+                document.getElementById('subTotalAll').innerText = totalBillThisMonth.toLocaleString();
+                document.getElementById('subTotalPaid').innerText = totalPaid.toLocaleString();
+                document.getElementById('subTotalRem').innerText = totalOutstanding.toLocaleString();
+                renderQuickAdd(selMonth); renderDebtList(selMonth); renderIncomeList(incMonth); 
+                
+                renderHistoryWithFilter(); 
+                
+                renderSettingList(); checkAnyInput();
+            } catch (e) { console.error("Render App Error:", e); }
+        }
+
+        function renderHistoryWithFilter() {
+            const start = document.getElementById('histStart').value;
+            const end = document.getElementById('histEnd').value;
+            const historyData = globalData.history || {};
+            
+            // กรอง Key
+            const filteredKeys = Object.keys(historyData).filter(key => {
+                if (!start && !end) return true;
+                if (start && key < start) return false;
+                if (end && key > end) return false;
+                return true;
+            });
+
+            // --- คำนวณยอดรวม (Summary) ---
+            let sumInc = 0, sumBill = 0, sumRem = 0;
+            filteredKeys.forEach(key => {
+                const d = historyData[key];
+                sumInc += safeNum(d.inc);
+                sumBill += safeNum(d.bill);
+                sumRem += Math.max(0, safeNum(d.bill) - safeNum(d.paid));
+            });
+            const sumNet = sumInc - sumBill;
+
+            // แสดงผลยอดรวมในกล่อง Summary
+            document.getElementById('historySummary').innerHTML = `
+                <div>
+                    <p class="text-[8px] text-gray-500 uppercase">รายรับทั้งหมด</p>
+                    <p class="text-xs font-bold text-green-400">฿${sumInc.toLocaleString()}</p>
+                </div>
+                <div>
+                    <p class="text-[8px] text-gray-500 uppercase">ยอดบิลทั้งหมด</p>
+                    <p class="text-xs font-bold text-red-400">฿${sumBill.toLocaleString()}</p>
+                </div>
+                <div class="mt-2 pt-2 border-t border-gray-700/50">
+                    <p class="text-[8px] text-gray-500 uppercase">ยอดคงค้างรวม</p>
+                    <p class="text-xs font-bold text-orange-400">฿${sumRem.toLocaleString()}</p>
+                </div>
+                <div class="mt-2 pt-2 border-t border-gray-700/50">
+                    <p class="text-[8px] text-gray-500 uppercase">ส่วนต่างสุทธิ</p>
+                    <p class="text-xs font-bold ${sumNet >= 0 ? 'text-blue-400' : 'text-red-500'}">฿${sumNet.toLocaleString()}</p>
+                </div>
+            `;
+            // ---------------------------
+
+            const listKeys = [...filteredKeys].sort((a,b) => b.localeCompare(a));
+            const chartKeys = [...filteredKeys].sort();
+
+            renderHistoryList(listKeys);
+            renderChart(chartKeys);
+        }
+
+        function renderQuickAdd(month) {
+            try {
+                const currentViewMonth = month.substring(0, 7);
+                const recorded = (globalData.transactions || []).filter(t => safeStr(t.month).substring(0, 7) === currentViewMonth).map(t => safeStr(t.card).trim().toLowerCase());
+                const grouped = (globalData.cards || []).reduce((acc, c) => {
+                    const cName = safeStr(c.name);
+                    const b = cName.split(' - ')[0] || 'อื่นๆ';
+                    if (recorded.includes(cName.trim().toLowerCase())) return acc;
+                    if (!acc[b]) acc[b] = []; acc[b].push(c); return acc;
+                }, {});
+                const parts = month.split("-");
+                if (parts.length < 2) return;
+                const [y, m] = parts;
+                const currMonthName = monthsTh[parseInt(m)-1];
+                let nextM_int = parseInt(m) + 1; let nextY_int = parseInt(y);
+                if (nextM_int > 12) { nextM_int = 1; nextY_int++; }
+                const nextMonthName = monthsTh[nextM_int - 1];
+
+                let html = '';
+                for (const b in grouped) {
+                    html += `<div class="mb-3"><div class="text-[9px] text-gray-500 font-bold mb-1 ml-1 border-l-2 border-orange-500 pl-2 uppercase">${b}</div>`;
+                    grouped[b].forEach(c => {
+                        const cName = safeStr(c.name);
+                        const id = btoa(unescape(encodeURIComponent(cName))).replace(/=/g, "");
+                        html += `<div class="quick-card quick-card-item mb-1.5" data-id="${id}" data-name="${safeEsc(cName)}"><div class="quick-card-title">${cName}</div><div class="form-single-row"><input type="text" id="tot-${id}" placeholder="ยอด" class="input-compact font-bold tot-input-check" oninput="formatCurrency(this)"><input type="text" id="min-${id}" placeholder="ขั้นต่ำ" class="input-compact" oninput="formatCurrency(this)"><input type="text" id="due-${id}" placeholder="วันที่" class="input-compact text-center" maxlength="2"><select id="target-${id}" class="input-compact"><option value="current">${currMonthName}</option><option value="next">${nextMonthName}</option></select><div onclick="saveQuick('${safeEsc(cName)}', '${id}')" class="btn-check-compact bg-orange-600">✔</div></div></div>`;
+                    }); html += `</div>`;
+                }
+                document.getElementById('quickAddList').innerHTML = html || '<p class="text-center text-gray-500 text-[10px] py-4 italic">บันทึกครบถ้วน ✨</p>';
+            } catch(e) { console.error("Quick Add Error", e); }
+        }
+        async function saveQuick(card, id) {
+            const tot = document.getElementById(`tot-${id}`).value.replace(/,/g, '');
+            let min = document.getElementById(`min-${id}`).value.replace(/,/g, '') || tot;
+            let due = document.getElementById(`due-${id}`).value;
+            const target = document.getElementById(`target-${id}`).value;
+            let viewMonth = document.getElementById('debtMonth').value; let payMonth = viewMonth;
+            if (target === 'next') { 
+                const [y, m] = viewMonth.split('-').map(Number);
+                let nextM = m + 1; let nextY = y;
+                if (nextM > 12) { nextM = 1; nextY++; }
+                payMonth = `${nextY}-${String(nextM).padStart(2, '0')}`;
+            }
+            if (!tot) return;
+            if (!due) { const [py, pm] = payMonth.split('-').map(Number); due = new Date(py, pm, 0).getDate().toString(); }
+            showLoader(true);
+            try { await fetch(CONFIG.SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'addTransaction', month: viewMonth, card, total: tot, minPay: min, dueDate: due, payMonth: payMonth }) }); fetchData(false); } catch (e) { showLoader(false); }
+        }
+        async function saveAll() {
+            const cardsToSave = [];
+            document.querySelectorAll('.quick-card-item').forEach(cardDiv => {
+                const cardName = cardDiv.dataset.name; const id = cardDiv.dataset.id;
+                const totalStr = document.getElementById(`tot-${id}`).value.replace(/,/g, '');
+                if (totalStr !== "" && !isNaN(parseFloat(totalStr))) {
+                    let minPay = document.getElementById(`min-${id}`).value.replace(/,/g, '') || totalStr;
+                    let dueDate = document.getElementById(`due-${id}`).value;
+                    const target = document.getElementById(`target-${id}`).value;
+                    let viewMonth = document.getElementById('debtMonth').value; let recordMonth = viewMonth;
+                    if (target === 'next') { 
+                        const [y, m] = viewMonth.split('-').map(Number);
+                        let nextM = m + 1; let nextY = y;
+                        if (nextM > 12) { nextM = 1; nextY++; }
+                        recordMonth = `${nextY}-${String(nextM).padStart(2, '0')}`;
+                    }
+                    if (!dueDate) dueDate = new Date(recordMonth.split("-")[0], recordMonth.split("-")[1], 0).getDate().toString();
+                    cardsToSave.push({ month: viewMonth, card: cardName, total: totalStr, minPay: minPay, dueDate: dueDate, payMonth: recordMonth });
+                }
+            });
+            if (cardsToSave.length > 0) { 
+                showLoader(true); 
+                try { await fetch(CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'saveBatch', items: cardsToSave }) }); fetchData(false); } catch (e) { showLoader(false); Swal.fire('Error', 'บันทึกไม่สำเร็จ', 'error'); } 
+            }
+        }
+        async function saveInc() {
+            const val = document.getElementById('incVal').value.replace(/,/g,'');
+            const type = document.getElementById('incType').value;
+            const month = document.getElementById('incomeMonth').value;
+            const day = document.getElementById('incDay').value; 
+            if (!val || !day) { Swal.fire({icon:'warning', title:'กรุณาระบุข้อมูลให้ครบ', timer:1500, showConfirmButton:false}); return; }
+            const fullDate = `${month}-${day.toString().padStart(2, '0')}`;
+            showLoader(true);
+            try { await fetch(CONFIG.SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'addIncome', month: fullDate, type, amount: val }) }); document.getElementById('incVal').value = ""; document.getElementById('incDay').value = ""; fetchData(false); } catch (e) { showLoader(false); }
+        }
+function renderDebtList(month) {
+    try {
+        const list = (globalData.transactions || []).filter(t => t.month === month);
+        const isPaidCheck = (t) => { 
+            const total = parseFloat(safeNum(t.total).toFixed(2)); 
+            const paid = parseFloat(safeNum(t.paid).toFixed(2)); 
+            return paid >= total; 
+        };
+        
+        let unpaidList = list.filter(t => !isPaidCheck(t));
+        const paidList = list.filter(t => isPaidCheck(t));
+
+        // --- 🟢 ส่วนที่แก้ไข: เรียงลำดับตาม ปี-เดือน แล้วตามด้วย วันที่ 🟢 ---
+        unpaidList.sort((a, b) => {
+            const getFullDateKey = (item) => {
+                // 1. ดึงปี-เดือน จาก payMonth (เช่น "2026-01") ถ้าไม่มีใช้เดือนที่บันทึก
+                const ym = item.payMonth || item.month || "0000-00";
+                
+                // 2. ดึงเฉพาะตัวเลขวันที่จาก dueDate (เช่น "31 มกราคม" ดึงออกมาแค่ "31")
+                // และเติม 0 ข้างหน้าให้เป็น 2 หลักเสมอ (เช่น "2" กลายเป็น "02")
+                const d = safeStr(item.dueDate).replace(/\D/g, '').padStart(2, '0') || "00";
+                
+                // 3. รวมร่างเป็น "2026-01-31" เพื่อใช้เรียงลำดับแบบข้อความ (String Comparison)
+                return ym + "-" + d;
+            };
+
+            const keyA = getFullDateKey(a);
+            const keyB = getFullDateKey(b);
+            
+            return keyA.localeCompare(keyB);
+        });
+        // -----------------------------------------------------------
+
+        document.getElementById('debtList').innerHTML = [...unpaidList, ...paidList].map(t => {
+            const total = safeNum(t.total); 
+            const isPaid = (safeNum(t.paid) >= parseFloat(total.toFixed(2)));
+            let dueDisplay = t.dueDate || "ไม่ระบุ";
+
+            return `<div class="card-debt mb-1 ${isPaid ? 'paid' : ''} shadow-md flex justify-between items-center px-3 py-2">
+                <div class="flex-1">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-[11px] font-bold text-white uppercase truncate pr-2">${safeEsc(t.card)}</span>
+                        <span class="text-[9px] text-gray-300 italic shrink-0">กำหนดจ่าย: ${dueDisplay}</span>
+                    </div>
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <p class="text-sm font-bold ${isPaid ? 'line-through opacity-50 text-gray-400' : 'text-red-500'}">฿${total.toLocaleString()}</p>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            ${safeNum(t.paid) > 0 ? `<p class="text-[9px] text-green-400 font-bold">Paid: ฿${safeNum(t.paid).toLocaleString()}</p>` : ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 ml-3">
+                    <button onclick="payPrompt(${t.rowIndex},'${total}','${t.paid}','${safeEsc(t.card)}',${isPaid})" class="${isPaid ? 'bg-blue-600' : 'bg-green-600'} text-white px-3 py-1 text-[10px] flex items-center justify-center rounded-lg font-bold shadow-sm">${isPaid ? '✔' : 'จ่าย'}</button>
+                    <input type="checkbox" class="debt-cb custom-checkbox" value="${t.rowIndex}" onchange="updateDelBtn('debt-cb', 'btnDelSelectedDebt')">
+                </div>
+            </div>`;
+        }).join('');
+    } catch (e) { 
+        console.error("renderDebtList Error:", e); 
+    }
+}
+        async function payPrompt(idx, tot, current, card, isEdit = false) {
+            const currentVal = safeNum(current); const totalVal = safeNum(tot); const remaining = Math.max(0, totalVal - currentVal);
+            const infoText = isEdit ? `ยอดปัจจุบัน: ฿${currentVal.toLocaleString()}` : `ยอดเต็ม: ฿${totalVal.toLocaleString()} <br> คงเหลือ: <b>฿${remaining.toLocaleString()}</b>`;
+            const { value: paid } = await Swal.fire({ title: isEdit ? `แก้ไขยอดจ่าย` : `บันทึกการจ่าย`, html: `<div class="mb-2 text-sm text-gray-300">${infoText}</div><div class="text-xs text-orange-400 mb-4">${card}</div>`, input: 'text', inputValue: isEdit ? currentVal.toFixed(2) : remaining.toFixed(2), showCancelButton: true, background:'#1e293b', color:'#fff', didOpen: () => { const input = Swal.getInput(); input.oninput = () => formatCurrency(input); } });
+            if (paid) { showLoader(true); await fetch(CONFIG.SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'updatePayment', rowIndex: idx, paid: paid.replace(/,/g,''), isOverwrite: isEdit }) }); fetchData(false); }
+        }
+        async function payBulk() {
+            const selectedIndexes = Array.from(document.querySelectorAll('.debt-cb:checked')).map(cb => parseInt(cb.value));
+            if (selectedIndexes.length < 1) return;
+            const { isConfirmed } = await Swal.fire({ title: 'ยืนยันการจ่าย?', text: `คุณเลือก ${selectedIndexes.length} รายการ ระบบจะบันทึกว่า "จ่ายเต็มจำนวน" ทั้งหมด`, icon: 'question', showCancelButton: true, background: '#1e293b', color: '#fff' });
+            if (isConfirmed) {
+                showLoader(true);
+                const itemsToPay = selectedIndexes.map(rowIndex => { const item = globalData.transactions.find(t => t.rowIndex === rowIndex); if (item) { return { rowIndex: rowIndex, paid: item.total }; } }).filter(Boolean);
+                if (itemsToPay.length > 0) { await fetch(CONFIG.SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'payBatch', items: itemsToPay }) }); fetchData(false); }
+            }
+        }
+      async function deleteBulk(action, className) {
+    // ดึงเลขแถว (rowIndex) จาก checkbox ที่ถูกเลือก
+    const selected = Array.from(document.querySelectorAll(`.${className}:checked`)).map(cb => parseInt(cb.value));
+    
+    if (selected.length === 0) return;
+
+    const result = await Swal.fire({ 
+        title: `ลบ ${selected.length} รายการ?`, 
+        text: "ข้อมูลจะถูกลบออกจาก Google Sheets ถาวร",
+        icon: 'warning', 
+        showCancelButton: true, 
+        confirmButtonColor: '#ef4444', 
+        confirmButtonText: 'ยืนยันการลบ',
+        cancelButtonText: 'ยกเลิก',
+        background: '#1e293b', 
+        color: '#fff' 
+    });
+
+    if (result.isConfirmed) {
+        showLoader(true); 
+        try { 
+            const batchAction = (action === 'deleteTransaction') ? 'deleteBatchTransaction' : 'deleteBatchIncome'; 
+            
+            // ส่งค่า rowIndices ไปให้ Apps Script
+            await fetch(CONFIG.SCRIPT_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: batchAction, rowIndices: selected }) 
+            }); 
+            
+            fetchData(false); // โหลดข้อมูลใหม่หลังจากลบเสร็จ
+        } catch (e) { 
+            console.error("Delete Error:", e);
+            showLoader(false); 
+            Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถลบข้อมูลได้', 'error');
+        } 
+    }
+}
+        function renderIncomeList(month) { 
+            try {
+                const list = (globalData.income || []).filter(i => i.month === month); list.sort((a, b) => new Date(a.fullDate) - new Date(b.fullDate));
+                document.getElementById('incomeList').innerHTML = list.map(i => { 
+                    return `<div class="bg-gray-800/40 p-3 rounded-xl border border-gray-700 flex justify-between items-center mb-1.5"><div><p class="text-white text-[10px] font-medium">${safeEsc(i.type)}</p><p class="text-[8px] text-gray-500 uppercase">${formatDateTh(i.fullDate)}</p></div><div class="flex items-center gap-3"><span class="text-green-400 font-bold text-xs">฿${safeNum(i.amount).toLocaleString()}</span><input type="checkbox" class="inc-cb custom-checkbox" value="${i.rowIndex}" onchange="updateDelBtn('inc-cb', 'btnDelSelectedInc')"></div></div>`; 
+                }).join('') || '<p class="text-center text-gray-500 py-6 text-[8px] italic">ไม่มีข้อมูลรายรับ</p>'; 
+            } catch(e) { console.error(e); }
+        }
+        function renderHistoryList(keys) {
+            try {
+                const historyData = globalData.history || {};
+                document.getElementById('historyList').innerHTML = keys.map(m => {
+                    const d = historyData[m]; const rem = Math.max(0, d.bill - d.paid); const net = d.inc - d.bill;
+                    return `<div class="accordion-item bg-slate-800/40 rounded-xl border border-gray-700 overflow-hidden mb-2"><div class="p-3 flex justify-between items-center cursor-pointer"><div><p class="text-[10px] font-bold text-white">📅 ${formatThaiMonth(m)}</p><div class="flex gap-2 text-[8px] mt-1"><span class="text-green-400">รับ: ฿${d.inc.toLocaleString()}</span><span class="text-red-400">บิล: ฿${d.bill.toLocaleString()}</span><span class="text-orange-500 font-bold">ค้าง: ฿${rem.toLocaleString()}</span></div></div><div><p class="text-[7px] text-gray-500 uppercase">ส่วนต่าง</p><p class="text-[10px] font-bold ${net>=0?'text-blue-400':'text-red-400'}">฿${net.toLocaleString()}</p></div></div></div>`;
+                }).join('');
+            } catch(e) { console.error(e); }
+        }
+        function renderChart(keys) {
+            const ctx = document.getElementById('myChart'); if(!ctx) return;
+            const historyData = globalData.history || {}; 
+            if (window.chartObj) window.chartObj.destroy();
+            window.chartObj = new Chart(ctx, { type: 'line', data: { labels: keys.map(l => formatThaiMonth(l)), datasets: [{ label: 'บิลรายเดือน', data: keys.map(l => historyData[l].bill || 0), borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: true, tension: 0.4 }, { label: 'รายรับรวม', data: keys.map(l => historyData[l].inc || 0), borderColor: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.1)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#94a3b8', font: { size: 9 } } } }, scales: { y: { ticks: { color: '#64748b', font: { size: 8 } }, grid: { color: 'rgba(51, 65, 85, 0.2)' } }, x: { ticks: { color: '#94a3b8', font: { size: 8 } }, grid: { display: false } } } } });
+        }
+        function renderSettingList() { 
+            try {
+                let totalLimit = 0, totalUsed = 0;
+                const html = (globalData.cards || []).map(c => {
+                    const limitVal = safeNum(c.limit), usedVal = safeNum(c.used), remVal = limitVal - usedVal; totalLimit += limitVal; totalUsed += usedVal;
+                    return `<div class="bg-gray-800/40 p-3 rounded-lg border border-gray-700 mb-2 shadow-sm"><div class="flex justify-between items-center mb-2"><span class="text-xs font-bold text-white uppercase">${safeEsc(c.name)}</span><div class="flex gap-3"><button onclick="editLimitPrompt('${safeEsc(c.name)}', '${limitVal}', '${remVal}')" class="text-blue-400 text-[10px] font-bold">✏️ แก้ไข</button><button onclick="deleteCard('${safeEsc(c.name)}')" class="text-red-500 text-[10px]">🗑️</button></div></div><div class="limit-info-row"><div class="limit-box"><p class="limit-label">ได้รับ</p><p class="limit-value text-blue-400">฿${limitVal.toLocaleString()}</p></div><div class="limit-box"><p class="limit-label">ใช้ไป</p><p class="limit-value text-red-400">฿${usedVal.toLocaleString()}</p></div><div class="limit-box"><p class="limit-label">คงเหลือ</p><p class="limit-value text-green-400">฿${remVal.toLocaleString()}</p></div></div></div>`;
+                }).join(''); 
+                document.getElementById('cardList').innerHTML = html;
+                document.getElementById('sumCardLimit').innerText = `฿${totalLimit.toLocaleString()}`; document.getElementById('sumCardUsed').innerText = `฿${totalUsed.toLocaleString()}`; document.getElementById('sumCardRem').innerText = `฿${(totalLimit - totalUsed).toLocaleString()}`;
+            } catch(e) { console.error(e); }
+        }
+        async function editLimitPrompt(name, oldLimit, oldRem) {
+            const { value: formValues } = await Swal.fire({ title: 'แก้ไขข้อมูลบัตร', html: `<div class="flex flex-col gap-3 text-left"><div><label class="text-xs text-gray-400">ชื่อบัตร</label><input id="swal-name" class="swal2-input m-0 w-full h-10 text-sm" value="${name}"></div><div><label class="text-xs text-gray-400">วงเงินที่ได้รับ</label><input id="swal-limit" class="swal2-input m-0 w-full h-10 text-sm" value="${oldLimit}" oninput="formatCurrency(this)"></div><div><label class="text-xs text-gray-400">วงเงินคงเหลือ</label><input id="swal-rem" class="swal2-input m-0 w-full h-10 text-sm" value="${oldRem}" oninput="formatCurrency(this)"></div></div>`, background: '#1e293b', color: '#fff', preConfirm: () => [document.getElementById('swal-name').value, document.getElementById('swal-limit').value.replace(/,/g, ''), document.getElementById('swal-rem').value.replace(/,/g, '')] });
+            if (formValues) { showLoader(true); const now = new Date(); const dateStr = now.toISOString(); const newName = formValues[0], newLimit = parseFloat(formValues[1] || 0), newRem = parseFloat(formValues[2] || 0), newUsed = newLimit - newRem; await fetch(CONFIG.SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'updateCardLimit', oldCardName: name, cardName: newName, limit: newLimit, used: newUsed, remaining: newRem, lastUpdate: dateStr }) }); fetchData(false); }
+        }
+        async function deleteCard(n) { if ((await Swal.fire({ title:'ลบชื่อบัตร?', text:n, showCancelButton:true, background:'#1e293b', color:'#fff' })).isConfirmed) { showLoader(true); await fetch(CONFIG.SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'deleteCard', cardName:n }) }); fetchData(false); } }
+        document.getElementById('cardForm').onsubmit = async (e) => { e.preventDefault(); const name = document.getElementById('newCard').value, limit = document.getElementById('newCardLimit').value.replace(/,/g, ''), rem = document.getElementById('newCardRem').value.replace(/,/g, ''); if (!name) return; showLoader(true); const now = new Date(); const dateStr = now.toISOString(); const limitVal = parseFloat(limit || 0), remVal = parseFloat(rem || 0), usedVal = limitVal - remVal; await fetch(CONFIG.SCRIPT_URL, { method:'POST', body: JSON.stringify({ action:'addCard', cardName: name, limit: limitVal, used: usedVal, remaining: remVal, lastUpdate: dateStr }) }); document.getElementById('cardForm').reset(); fetchData(false); };
+        function formatCurrency(input) { let val = input.value.replace(/[^0-9.]/g, ''); const parts = val.split('.'); if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join(''); if (val.includes('.')) { let [int, dec] = val.split('.'); if (int) int = parseInt(int).toLocaleString(); input.value = int + '.' + dec.substring(0, 2); } else { input.value = val ? parseInt(val).toLocaleString() : ""; } checkAnyInput(); }
+        function openPicker(id) { const input = document.getElementById(id); if (input.showPicker) input.showPicker(); else input.click(); }
+        function showLoader(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; }
+        function checkAnyInput() { let hasInput = false; document.querySelectorAll('.tot-input-check').forEach(i => { if (i.value.trim() !== "") hasInput = true; }); document.getElementById('btnSaveAll').style.display = hasInput ? 'block' : 'none'; }
+        function updateDelBtn(className, btnDelId) { const checkedCount = document.querySelectorAll(`.${className}:checked`).length; document.getElementById(btnDelId).style.display = checkedCount > 0 ? 'block' : 'none'; if (className === 'debt-cb') document.getElementById('btnPaySelectedDebt').style.display = checkedCount > 1 ? 'block' : 'none'; }
+        function switchTab(t) { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); document.getElementById('tab-'+t).classList.add('active'); ['debt','income','history','setting'].forEach(v => document.getElementById('view-'+v).classList.toggle('hidden', v !== t)); if (t === 'history') setTimeout(() => { renderHistoryWithFilter(); }, 100); }
+    </script>
+</body>
+</html>
