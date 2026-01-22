@@ -2,12 +2,11 @@
 <html>
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GBase System</title>
-    <script src="config.js"></script>
+    <title>GBase</title><script src="config.js"></script>
     <script>
         async function boot() {
-            const params = new URLSearchParams(window.location.search);
-            const target = params.get('p') || 'index.html';
+            const p = new URLSearchParams(window.location.search);
+            const target = p.get('p') || 'index.html';
             try {
                 const res = await fetch(CONFIG.SCRIPT_URL + "?get=loadLatest&file=" + target);
                 const data = await res.json();
@@ -17,9 +16,9 @@
                     document.open(); document.write(data.code); document.close();
                 } else { throw new Error("File not found in Hub"); }
             } catch (e) {
-                document.body.innerHTML = `<div style="background:#0f172a;color:#ef4444;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:sans-serif;padding:20px;text-align:center;">
-                    <h3 style="margin-bottom:10px;">SYNC ERROR</h3><p style="color:#64748b;font-size:14px;">${e.message}</p>
-                    <a href="${CONFIG.SCRIPT_URL}?page=hub" style="color:#3b82f6;margin-top:20px;text-decoration:none;font-weight:bold;">GO TO CODE HUB</a>
+                document.body.innerHTML = `<div style="background:#0f172a;color:#ef4444;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:sans-serif;text-align:center;padding:20px;">
+                    <h3>Sync Error</h3><p style="font-size:12px;color:#64748b;">${e.message}</p>
+                    <a href="${CONFIG.SCRIPT_URL}?page=hub" style="color:#3b82f6;margin-top:20px;text-decoration:none;font-weight:bold;border:1px solid #3b82f6;padding:8px 16px;border-radius:8px;">Open Code Hub</a>
                 </div>`;
             }
         }
