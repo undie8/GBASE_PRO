@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script>
+        var path = window.location.pathname.split('/').pop();
+        if (path && path !== 'index' && path !== 'index.html') {
+            window.location.href = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/') + '/?p=' + path + ".html";
+        } else { window.location.href = '/'; }
+    </script>
+</head>
+<body></body>
+</html>
