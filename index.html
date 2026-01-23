@@ -1,26 +1,227 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-    <title>My Web App</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dynamic Web App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* CSS Styling แบบ 100% */
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 15px;
+        }
+
+        /* Grid Layout สำหรับแสดงการ์ด */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        /* Card Design */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .card-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background-color: #ddd; /* สีพื้นหลังรูปขณะโหลด */
+        }
+
+        .card-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .card-desc {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+            flex-grow: 1;
+        }
+
+        .card-btn {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .card-btn:hover {
+            background-color: #2980b9;
+        }
+
+        /* Loading Animation */
+        #loader {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2rem;
+            color: #888;
+        }
+        
+        /* Error Message */
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            padding: 20px;
+            background: #fadbd8;
+            border-radius: 8px;
+            display: none;
+        }
+
+    </style>
 </head>
 <body>
-    <div id="display">กำลังโหลดข้อมูล...</div>
+
+    <header>
+        <h1>ระบบแสดงผลจาก Google Sheet</h1>
+        <p>อัพเดตข้อมูลผ่าน Sheet โดยไม่ต้องแก้โค้ด</p>
+    </header>
+
+    <div class="container">
+        <div id="loader">กำลังโหลดข้อมูลจากฐานข้อมูล...</div>
+        <div id="error-msg" class="error"></div>
+        <div id="app" class="card-grid"></div>
+    </div>
 
     <script>
-        const scriptURL = 'URL_จาก_GOOGLE_APPS_SCRIPT_ของคุณ';
+        // **********************************************
+        // 1. ตั้งค่า URL (สำคัญ: เปลี่ยนตรงนี้!)
+        // **********************************************
+        const API_URL = 'https://script.google.com/macros/s/AKfycbykCAfvQne5X0xWR0SGaczpeZ4r43pGlyKhc9JcdeiIwSNGUuDonrNk5UL4TxBFTbum/exec'; 
 
-        fetch(scriptURL)
-            .then(response => response.json())
-            .then(data => {
-                let html = '<ul>';
-                data.forEach(item => {
-                    // สมมติใน Sheet มีหัวคอลัมน์ชื่อ Name
-                    html += `<li>${item.Name}</li>`; 
+        // **********************************************
+        // 2. ฟังก์ชันหลัก
+        // **********************************************
+        async function fetchData() {
+            const loader = document.getElementById('loader');
+            const app = document.getElementById('app');
+            const errorMsg = document.getElementById('error-msg');
+
+            try {
+                const response = await fetch(API_URL);
+                const json = await response.json();
+
+                if (json.status !== 'success') {
+                    throw new Error('Data format error');
+                }
+
+                // ซ่อน Loader
+                loader.style.display = 'none';
+
+                // วนลูปสร้างการ์ด
+                json.data.forEach(item => {
+                    const card = createCard(item);
+                    app.appendChild(card);
                 });
-                html += '</ul>';
-                document.getElementById('display').innerHTML = html;
-            })
-            .catch(error => console.error('Error!', error.message));
+
+            } catch (error) {
+                console.error('Error:', error);
+                loader.style.display = 'none';
+                errorMsg.style.display = 'block';
+                errorMsg.textContent = 'เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + error.message;
+            }
+        }
+
+        // ฟังก์ชันสร้าง HTML ของแต่ละการ์ด
+        function createCard(item) {
+            const div = document.createElement('div');
+            div.className = 'card';
+
+            // ตรวจสอบว่ามีรููปภาพหรือไม่ ถ้าไม่มีใช้รูป Placeholder
+            // (รองรับลิงก์ Google Drive ด้วยฟังก์ชัน driveImageLink)
+            const imgSrc = item.imageurl ? convertDriveLink(item.imageurl) : 'https://via.placeholder.com/400x200?text=No+Image';
+            
+            // ป้องกันค่า null/undefined ในข้อความ
+            const title = item.title || 'ไม่มีชื่อเรื่อง';
+            const desc = item.description || '-';
+            const link = item.link || '#';
+
+            div.innerHTML = `
+                <img src="${imgSrc}" alt="${title}" class="card-image" loading="lazy">
+                <div class="card-content">
+                    <div class="card-title">${title}</div>
+                    <div class="card-desc">${desc}</div>
+                    <a href="${link}" target="_blank" class="card-btn">อ่านเพิ่มเติม</a>
+                </div>
+            `;
+            return div;
+        }
+
+        // ฟังก์ชันแปลงลิงก์ Google Drive ให้แสดงเป็นรูปได้
+        function convertDriveLink(url) {
+            if (url.includes('drive.google.com')) {
+                // ดึง ID ออกมาจาก URL
+                const idMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                if (idMatch && idMatch[1]) {
+                    return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
+                }
+            }
+            return url;
+        }
+
+        // เริ่มทำงานเมื่อโหลดหน้าเสร็จ
+        document.addEventListener('DOMContentLoaded', fetchData);
+
     </script>
 </body>
 </html>
