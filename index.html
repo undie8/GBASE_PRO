@@ -5,33 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GBASE PRO</title>
     <style>
-        /* ตั้งค่าให้หน้าเว็บเป็นเต็มจอ และไม่มีขอบ */
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            overflow: hidden; /* ซ่อน Scrollbar ของ GitHub เอง */
-            background-color: #f0f2f5;
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #f0f2f5; }
+        
+        /* Loading Animation */
+        #loader {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: sans-serif;
+            color: #555;
+            text-align: center;
         }
         
-        /* สร้าง Iframe ให้ทับหน้า GitHub ทั้งหมด */
-        #ghub-frame {
-            position: absolute;
-            top: 0;
-            left: 0;
+        /* Iframe ที่เราจะฉีดโค้ดเข้าไป */
+        #render-frame {
             width: 100%;
             height: 100%;
             border: none;
+            display: none; /* ซ่อนไว้ก่อนจนกว่าจะโหลดเสร็จ */
         }
     </style>
 </head>
 <body>
 
-    <iframe 
-        id="ghub-frame"
-        src="https://script.google.com/macros/s/AKfycbwFLQGv5QET4fu1rjrL08eWbXD7RT8moHWzsW5QObDwBR8J5SXOZGfNj__rTtWGxBxa/exec"
-        title="GBASE PRO Interface">
-    </iframe>
+    <div id="loader">
+        <p>กำลังเชื่อมต่อ GBASE SERVER...</p>
+    </div>
 
+    <iframe id="render-frame"></iframe>
+
+    <script>
+        // 1. วาง URL จาก Apps Script Deployment ล่าสุดที่นี่
+        const SCRIPT_URL = "วาง_URL_ใหม่_ของ_GOOGLE_APPS_SCRIPT_ตรงนี้";
+
+        // ฟังก์ชันดึงค่า Parameter จาก URL (เช่น ?page=ghub)
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        async function init() {
+            const page = getQueryParam('page') || 'index';
+            const targetUrl = `${SCRIPT_URL}?page=${page}`; // ส่งค่า page ไปด้วย
+
+            try {
+                // ดึงข้อมูล JSON จาก Google
+                const response = await fetch(targetUrl);
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    // ฉีด HTML ที่ได้เข้าไปใน iframe
+                    const iframe = document.getElementById('render-frame');
+                    const loader = document.getElementById('loader');
+                    
+                    // เทคนิค srcdoc: ทำให้ iframe คิดว่าเป็นเว็บเดียวกัน (แก้ปัญหา sameorigin)
+                    iframe.srcdoc = data.html;
+                    
+                    iframe.onload = function() {
+                        loader.style.display = 'none';
+                        iframe.style.display = 'block';
+                    };
+                }
+            } catch (error) {
+                document.getElementById('loader').innerHTML = `
+                    <h3 style="color:red">Connection Error</h3>
+                    <p>${error.message}</p>
+                    <p>กรุณาตรวจสอบ URL ในโค้ด GitHub หรือการตั้งค่า Deploy</p>
+                `;
+            }
+        }
+
+        // เริ่มทำงาน
+        init();
+    </script>
 </body>
 </html>
