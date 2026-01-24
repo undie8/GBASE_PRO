@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Awesome Project</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&family=Plus+Jakarta+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+..
+  <style>
+    :root {
+      --bg-color: #050505;
+      --card-bg: rgba(255, 255, 255, 0.03);
+      --primary: #00d26a; /* สีเขียวแบบ G HUB */
+      --secondary: #007acc;
+      --text-main: #ffffff;
+      --text-muted: #888888;
+      --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* พื้นหลัง Effe....ct */
+    .bg-gradient {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: 
+        radial-gradient(circle at 15% 50%, rgba(0, 210, 106, 0.08) 0%, transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(0, 122, 204, 0.08) 0%, transparent 25%);
+      z-index: -1;
+    }
+
+    /* Navigation */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 5%;
+      backdrop-filter: blur(10px);
+      position: fixed;
+      width: 100%;
+      top: 0;
+      z-index: 100;
+      border-bottom: var(--glass-border);
+    }
+
+    .logo {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #fff, #aaa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .logo span { color: var(--primary); -webkit-text-fill-color: var(--primary); }
+
+    .nav-btn {
+      padding: 8px 20px;
+      border-radius: 50px;
+      border: var(--glass-border);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: 0.3s;
+    }
+    .nav-btn:hover { background: var(--primary); border-color: var(--primary); color: #000; font-weight: bold; }
+
+    /* Hero Section */
+    .hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 0 20px;
+    }
+
+    .hero h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 4rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      line-height: 1.1;
+      background: linear-gradient(to right, #fff 0%, #aaa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero h1 .highlight {
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin-bottom: 40px;
+    }
+
+    .cta-group { display: flex; gap: 15px; }
+    
+    .btn {
+      padding: 12px 30px;
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .btn-primary {
+      background: var(--primary);
+      color: #000;
+      border: 1px solid var(--primary);
+    }
+    .btn-primary:hover { box-shadow: 0 0 20px rgba(0, 210, 106, 0.4); transform: translateY(-2px); }
+    
+    .btn-outline {
+      background: transparent;
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    .btn-outline:hover { border-color: #fff; background: rgba(255,255,255,0.05); }
+
+    /* Cards Section */
+    .features {
+      padding: 80px 5%;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .section-title { text-align: center; margin-bottom: 50px; font-size: 2rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: var(--glass-border);
+      padding: 30px;
+      border-radius: 16px;
+      transition: 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      border-color: var(--primary);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+
+    .card i {
+      font-size: 2rem;
+      color: var(--primary);
+      margin-bottom: 20px;
+      display: inline-block;
+      padding: 15px;
+      background: rgba(0, 210, 106, 0.1);
+      border-radius: 12px;
+    }
+
+    .card h3 { margin-bottom: 10px; font-size: 1.4rem; }
+    .card p { color: var(--text-muted); font-size: 0.95rem; }
+
+    /* Footer */
+    footer {
+      padding: 40px;
+      text-align: center;
+      color: var(--text-muted);
+      border-top: var(--glass-border);
+      font-size: 0.9rem;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2.5rem; }
+      .cta-group { flex-direction: column; width: 100%; }
+      .btn { width: 100%; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-gradient"></div>
+
+  <nav>
+    <div class="logo">MY<span>PROJECT</span></div>
+    <a href="#" class="nav-btn">Contact Me</a>
+  </nav>
+
+  <section class="hero">
+    <h1>Create Something<br><span class="highlight">Extraordinary</span></h1>
+    <p>
+      ยินดีต้อนรับสู่โปรเจกต์ของฉัน เว็บไซต์นี้ถูกเขียนและพัฒนาขึ้นบนระบบ Cloud IDE 100% 
+      รวดเร็ว ปลอดภัย และเข้าถึงได้จากทุกที่
+    </p>
+    <div class="cta-group">
+      <a href="#" class="btn btn-primary" onclick="alert('Hello World!')">Get Started</a>
+      <a href="https://github.com" target="_blank" class="btn btn-outline"><i class="fab fa-github"></i> GitHub</a>
+    </div>
+  </section>
+
+  <section class="features">
+    <h2 class="section-title">Why this builds rocks?</h2>
+    <div class="grid">
+      <div class="card">
+        <i class="fas fa-rocket"></i>
+        <h3>Super Fast</h3>
+        <p>โหลดหน้าเว็บได้รวดเร็วทันใจ ด้วยโครงสร้าง HTML5 ที่สะอาดและเบาบาง ไม่หนักเครื่อง</p>
+      </div>
+      <div class="card">
+        <i class="fas fa-code"></i>
+        <h3>Clean Code</h3>
+        <p>โค้ดอ่านง่าย แก้ไขสะดวก จัดระเบียบไว้อย่างดี เหมาะสำหรับการนำไปพัฒนาต่อยอด</p>
+      </div>
+      <div class="card">
+        <i class="fas fa-mobile-alt"></i>
+        <h3>Responsive</h3>
+        <p>รองรับการแสดงผลทุกหน้าจอ ไม่ว่าจะเป็น Desktop, Tablet หรือ Mobile ก็สวยงาม</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>&copy; 2026 Developed with G HUB IDE. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // Animation เล็กๆ น้อยๆ
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log("Page Loaded Successfully from G HUB IDE!");
+      
+      // ตัวอย่างฟังก์ชันง่ายๆ
+      const cards = document.querySelectorAll('.card');
+      cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+          card.style.transition = 'all 0.6s ease';
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, 100 * index);
+      });
+    });
+  </script>
+
+</body>
+</html>
