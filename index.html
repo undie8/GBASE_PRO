@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="th" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sci Shop - ร้านค้าสวัสดิการห้องวิทยาศาสตร์</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Prompt', sans-serif;
+    }
+    .gradient-bg {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    }
+    .card-glass {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #e94560 0%, #ff6b6b 100%);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #d63850 0%, #e94560 100%);
+    }
+    .product-card {
+      transition: all 0.3s ease;
+    }
+    .product-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(233, 69, 96, 0.2);
+    }
+    .toast {
+      animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    .modal-overlay {
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body class="h-full gradient-bg">
+  <div id="app" class="h-full overflow-auto"><!-- Toast Container -->
+   <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div><!-- Login/Register Page -->
+   <div id="auth-page" class="min-h-full flex items-center justify-center p-4">
+    <div class="card-glass rounded-3xl shadow-2xl p-8 w-full max-w-md">
+     <div class="text-center mb-8">
+      <div class="text-6xl mb-4">
+       🧋
+      </div>
+      <h1 id="shop-title" class="text-3xl font-bold text-gray-800">Sci Shop</h1>
+      <p id="welcome-msg" class="text-gray-500 mt-2">ร้านค้าสวัสดิการห้องวิทยาศาสตร์ โรงเรียนคลองขวาง</p>
+     </div>
+     <div id="auth-tabs" class="flex mb-6 bg-gray-100 rounded-xl p-1"><button onclick="showLoginForm()" id="login-tab" class="flex-1 py-2 rounded-lg font-medium transition-all bg-white text-gray-800 shadow">เข้าสู่ระบบ</button> <button onclick="showRegisterForm()" id="register-tab" class="flex-1 py-2 rounded-lg font-medium transition-all text-gray-500">สมัครสมาชิก</button>
+     </div><!-- Login Form -->
+     <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">ชื่อผู้ใช้</label> <input type="text" id="login-username" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition-all" placeholder="กรอกชื่อผู้ใช้">
+      </div>
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">รหัสผ่าน</label> <input type="password" id="login-password" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition-all" placeholder="กรอกรหัสผ่าน">
+      </div><button type="submit" id="login-btn" class="w-full btn-primary text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"> เข้าสู่ระบบ </button>
+     </form><!-- Register Form -->
+     <form id="register-form" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">ชื่อผู้ใช้</label> <input type="text" id="reg-username" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition-all" placeholder="กรอกชื่อผู้ใช้">
+      </div>
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">รหัสผ่าน</label> <input type="password" id="reg-password" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition-all" placeholder="กรอกรหัสผ่าน">
+      </div>
+      <div><label class="block text-sm font-medium text-gray-700 mb-1">ยืนยันรหัสผ่าน</label> <input type="password" id="reg-confirm" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition-all" placeholder="ยืนยันรหัสผ่าน">
+      </div><button type="submit" id="register-btn" class="w-full btn-primary text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"> สมัครสมาชิก </button>
+     </form>
+    </div>
+   </div><!-- Main Shop Page -->
+   <div id="shop-page" class="hidden min-h-full"><!-- Header -->
+    <header class="bg-white/95 backdrop-blur-lg shadow-lg sticky top-0 z-40">
+     <div class="max-w-7xl mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+       <div class="flex items-center gap-3"><span class="text-4xl">🧋</span>
+        <h1 id="header-shop-name" class="text-2xl font-bold text-gray-800">Sci Shop</h1>
+       </div>
+       <div class="flex items-center gap-4">
+        <div id="user-info" class="flex items-center gap-3 bg-gray-100 rounded-full px-4 py-2"><span class="text-xl">👤</span> <span id="display-username" class="font-medium text-gray-700"></span> <span id="admin-badge" class="hidden bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs px-2 py-1 rounded-full font-semibold">Admin</span>
+        </div>
+        <div class="flex items-center gap-2 bg-green-50 rounded-full px-4 py-2"><span class="text-xl">💰</span> <span id="user-balance" class="font-bold text-green-600">0</span> <span class="text-green-600">บาท</span>
+        </div><button onclick="toggleCart()" class="relative bg-pink-50 p-3 rounded-full hover:bg-pink-100 transition-all"> <span class="text-2xl">🛒</span> <span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span> </button> <button onclick="handleLogout()" class="bg-gray-200 hover:bg-gray-300 p-3 rounded-full transition-all" title="ออกจากระบบ"> <span class="text-xl">🚪</span> </button>
+       </div>
+      </div>
+     </div>
+    </header><!-- Admin Panel Toggle -->
+    <div id="admin-toggle" class="hidden max-w-7xl mx-auto px-4 mt-4"><button onclick="toggleAdminPanel()" class="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-2 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all flex items-center gap-2"> <span>⚙️</span> <span>แผงควบคุมแอดมิน</span> </button>
+    </div><!-- Admin Panel -->
+    <div id="admin-panel" class="hidden max-w-7xl mx-auto px-4 mt-4">
+     <div class="bg-white rounded-2xl shadow-xl p-6">
+      <div class="flex items-center justify-between mb-6">
+       <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><span>👑</span> แผงควบคุมแอดมิน</h2><button onclick="toggleAdminPanel()" class="text-gray-400 hover:text-gray-600">✕</button>
+      </div>
+      <div class="flex flex-wrap gap-2 mb-6"><button onclick="showAdminTab('products')" id="admin-tab-products" class="px-4 py-2 rounded-lg font-medium bg-pink-500 text-white">จัดการสินค้า</button> <button onclick="showAdminTab('members')" id="admin-tab-members" class="px-4 py-2 rounded-lg font-medium bg-gray-200 text-gray-700">จัดการสมาชิก</button> <button onclick="showAdminTab('topup')" id="admin-tab-topup" class="px-4 py-2 rounded-lg font-medium bg-gray-200 text-gray-700">เติมเงินสมาชิก</button>
+      </div><!-- Products Management -->
+      <div id="admin-products" class="space-y-4">
+       <h3 class="font-semibold text-gray-700">เพิ่มสินค้าใหม่</h3>
+       <form onsubmit="handleAddProduct(event)" class="grid grid-cols-1 md:grid-cols-5 gap-4"><input type="text" id="new-product-name" required placeholder="ชื่อสินค้า" class="px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-500 outline-none"> <input type="number" id="new-product-price" required placeholder="ราคา" min="1" class="px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-500 outline-none"> <input type="text" id="new-product-category" required placeholder="ประเภทสินค้า" class="px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-500 outline-none"> <input type="text" id="new-product-image" required placeholder="อีโมจิ หรือ ข้อความ" maxlength="10" class="px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-500 outline-none" title="กรอกอีโมจิ หรือตัวอักษร"> <button type="submit" class="btn-primary text-white py-2 rounded-xl font-semibold">เพิ่มสินค้า</button>
+       </form>
+       <h3 class="font-semibold text-gray-700 mt-6">รายการสินค้าทั้งหมด</h3>
+       <div id="admin-product-list" class="space-y-2 max-h-64 overflow-y-auto"></div>
+      </div><!-- Members Management -->
+      <div id="admin-members" class="hidden space-y-4">
+       <h3 class="font-semibold text-gray-700">รายชื่อสมาชิกทั้งหมด</h3>
+       <div id="member-list" class="space-y-2 max-h-80 overflow-y-auto"></div>
+      </div><!-- Top Up -->
+      <div id="admin-topup" class="hidden space-y-4">
+       <div class="grid grid-cols-1 md:grid-cols-2 gap-6"><!-- Top Up Member -->
+        <div>
+         <h3 class="font-semibold text-gray-700 mb-4">เติมเงินให้สมาชิก</h3>
+         <form onsubmit="handleTopUp(event)" class="grid grid-cols-1 gap-4"><select id="topup-member" required class="px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-pink-500 outline-none"> <option value="">เลือกสมาชิก</option> </s
