@@ -3,124 +3,131 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sci Shop - Clean Version</title>
+  <title>Sci Shop POS - Admin Edition</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Prompt', sans-serif; box-sizing: border-box; }
+    body { font-family: 'Prompt', sans-serif; }
     .gradient-bg { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
     .card-glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
     .btn-primary { background: linear-gradient(135deg, #e94560 0%, #ff6b6b 100%); transition: 0.3s; }
     .btn-primary:hover { transform: scale(1.02); opacity: 0.9; }
-    .btn-disabled { background: #9ca3af !important; cursor: not-allowed; transform: none !important; }
     .hide { display: none !important; }
+    .tab-active { border-bottom: 3px solid #e94560; color: #e94560; font-weight: bold; }
     @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     .toast { animation: slideIn 0.3s ease forwards; }
   </style>
 </head>
 
 <body class="h-full gradient-bg overflow-hidden" onload="fetchData()">
-  <div id="app" class="h-full overflow-auto text-gray-800">
-    
+  <div id="app" class="h-full overflow-auto text-gray-800 pb-10">
     <div id="toast-container" class="fixed top-4 right-4 z-[100] flex flex-col gap-2"></div>
 
     <div id="auth-page" class="min-h-full flex items-center justify-center p-4">
-      <div class="card-glass rounded-3xl shadow-2xl p-8 w-full max-w-md border border-white/20">
-        <div class="text-center mb-8">
-          <div class="text-6xl mb-4">🔬</div>
-          <h1 class="text-3xl font-bold bg-gradient-to-r from-pink-600 to-orange-500 bg-clip-text text-transparent">Sci Shop</h1>
-          <p class="text-gray-500 mt-2">ระบบร้านค้าสวัสดิการห้องวิทยาศาสตร์</p>
-        </div>
-        
+      <div class="card-glass rounded-3xl shadow-2xl p-8 w-full max-w-md">
+        <div class="text-center mb-6"><span class="text-6xl">🔬</span><h1 class="text-3xl font-bold mt-2">Sci Shop</h1></div>
         <div class="flex mb-6 bg-gray-100 rounded-xl p-1">
-          <button onclick="switchAuth('login')" id="tab-l" class="flex-1 py-2 rounded-lg font-bold bg-white shadow transition-all">เข้าสู่ระบบ</button>
-          <button onclick="switchAuth('reg')" id="tab-r" class="flex-1 py-2 rounded-lg font-bold text-gray-400 transition-all">สมัครสมาชิก</button>
+          <button onclick="switchAuth('login')" id="tab-l" class="flex-1 py-2 rounded-lg font-bold bg-white shadow">เข้าสู่ระบบ</button>
+          <button onclick="switchAuth('reg')" id="tab-r" class="flex-1 py-2 rounded-lg font-bold text-gray-400">สมัครสมาชิก</button>
         </div>
-
         <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
-          <input type="text" id="l-user" required class="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-pink-500" placeholder="ชื่อผู้ใช้">
-          <input type="password" id="l-pass" required class="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-pink-500" placeholder="รหัสผ่าน">
-          <button type="submit" id="login-btn" class="w-full btn-primary text-white py-3 rounded-xl font-bold shadow-lg">เข้าสู่ระบบ</button>
+          <input type="text" id="l-user" required class="w-full p-3 rounded-xl border outline-none" placeholder="ชื่อผู้ใช้">
+          <input type="password" id="l-pass" required class="w-full p-3 rounded-xl border outline-none" placeholder="รหัสผ่าน">
+          <button type="submit" id="login-btn" class="w-full btn-primary text-white py-3 rounded-xl font-bold">เข้าสู่ระบบ</button>
         </form>
-
         <form id="reg-form" onsubmit="handleRegister(event)" class="space-y-4 hide">
-          <input type="text" id="r-user" required class="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-pink-500" placeholder="ตั้งชื่อผู้ใช้">
-          <input type="password" id="r-pass" required class="w-full px-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-pink-500" placeholder="ตั้งรหัสผ่าน">
-          <button type="submit" id="reg-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg transition-all">ยืนยันสมัครสมาชิก</button>
+          <input type="text" id="r-user" required class="w-full p-3 rounded-xl border outline-none" placeholder="ตั้งชื่อผู้ใช้">
+          <input type="password" id="r-pass" required class="w-full p-3 rounded-xl border outline-none" placeholder="ตั้งรหัสผ่าน">
+          <button type="submit" id="reg-btn" class="w-full bg-blue-500 text-white py-3 rounded-xl font-bold">สมัครสมาชิก</button>
         </form>
       </div>
     </div>
 
     <div id="shop-page" class="hide min-h-full">
-      <header class="bg-white/95 backdrop-blur-lg shadow-md sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="text-3xl">🧋</span>
-            <h1 class="text-xl font-bold text-gray-800">Sci Shop</h1>
-          </div>
-          
+      <header class="bg-white shadow-md sticky top-0 z-40 p-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+          <div class="flex items-center gap-2"><span class="text-3xl">🧋</span><h1 class="font-bold text-xl">Sci Shop</h1></div>
           <div class="flex items-center gap-3">
-            <div class="flex flex-col items-end">
-              <span id="user-display" class="font-bold text-sm text-gray-700">User</span>
-              <span id="role-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-pink-100 text-pink-600 uppercase font-bold">Member</span>
+            <div class="bg-green-50 px-3 py-1 rounded-full border border-green-200">
+                <span class="text-green-600 font-bold">💰 <span id="balance-display">0</span> ฿</span>
             </div>
-            <div class="bg-green-50 px-4 py-2 rounded-2xl flex items-center gap-2 border border-green-200">
-              <span class="text-green-600 font-bold">💰</span>
-              <span id="balance-display" class="font-bold text-green-700">0</span>
-            </div>
-            <button onclick="toggleCart()" class="relative p-2 bg-pink-50 rounded-full text-2xl transition-all hover:bg-pink-100">
-              🛒 <span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
+            <button onclick="toggleCart()" class="relative p-2 bg-pink-50 rounded-full">
+                🛒 <span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
             </button>
             <button onclick="location.reload()" class="p-2 hover:bg-gray-100 rounded-full">🚪</button>
           </div>
         </div>
       </header>
 
-      <div id="admin-bar" class="hide max-w-7xl mx-auto px-4 mt-4">
-        <button onclick="toggleAdminPanel()" class="w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 py-3 rounded-2xl font-bold shadow-md transition-all flex items-center justify-center gap-2">
-          ⚙️ แผงควบคุมผู้ดูแลระบบ
-        </button>
-      </div>
-
-      <div id="admin-panel" class="hide max-w-7xl mx-auto px-4 mt-4">
-        <div class="bg-white rounded-3xl p-6 shadow-xl border-2 border-yellow-300">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="space-y-4">
-              <h3 class="font-bold text-pink-600">➕ เพิ่มสินค้าใหม่</h3>
-              <form onsubmit="handleAddProduct(event)" class="grid grid-cols-2 gap-2">
-                <input id="p-name" placeholder="ชื่อสินค้า" required class="col-span-2 p-3 border rounded-xl outline-none">
-                <input id="p-price" type="number" placeholder="ราคา" required class="p-3 border rounded-xl outline-none">
-                <input id="p-icon" placeholder="อีโมจิ (🥤)" required class="p-3 border rounded-xl outline-none">
-                <button type="submit" id="add-prod-btn" class="col-span-2 bg-pink-500 text-white py-3 rounded-xl font-bold">บันทึกสินค้า</button>
-              </form>
+      <div id="admin-bar" class="hide max-w-7xl mx-auto px-4 mt-6">
+        <div class="bg-white rounded-3xl p-6 shadow-xl border-t-4 border-yellow-400">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold flex items-center gap-2"><span>👑</span> แผงควบคุมระบบ (Admin POS)</h2>
+            <div class="flex gap-2">
+                <button onclick="switchAdminTab('dash')" class="admin-tab tab-active px-3 py-1" id="btn-dash">ภาพรวม</button>
+                <button onclick="switchAdminTab('prod')" class="admin-tab px-3 py-1" id="btn-prod">สินค้า</button>
+                <button onclick="switchAdminTab('mem')" class="admin-tab px-3 py-1" id="btn-mem">สมาชิก</button>
+                <button onclick="switchAdminTab('hist')" class="admin-tab px-3 py-1" id="btn-hist">ประวัติ</button>
             </div>
-            <div class="space-y-4">
-              <h3 class="font-bold text-green-600">💵 เติมเงินสมาชิก</h3>
-              <form onsubmit="handleTopup(event)" class="space-y-3">
-                <select id="topup-user-select" class="w-full p-3 border rounded-xl outline-none"></select>
-                <input id="topup-amount" type="number" placeholder="จำนวนเงิน" required class="w-full p-3 border rounded-xl outline-none">
-                <button type="submit" id="topup-btn" class="w-full bg-green-500 text-white py-3 rounded-xl font-bold">ยืนยันการเติมเงิน</button>
-              </form>
+          </div>
+
+          <div id="admin-dash" class="admin-content grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                <p class="text-blue-500 text-sm">ยอดขายรวม</p>
+                <h3 class="text-2xl font-bold" id="stat-sales">0 ฿</h3>
+            </div>
+            <div class="bg-purple-50 p-4 rounded-2xl border border-purple-100">
+                <p class="text-purple-500 text-sm">สมาชิกทั้งหมด</p>
+                <h3 class="text-2xl font-bold" id="stat-users">0 คน</h3>
+            </div>
+            <div class="bg-pink-50 p-4 rounded-2xl border border-pink-100">
+                <p class="text-pink-500 text-sm">สินค้าในคลัง</p>
+                <h3 class="text-2xl font-bold" id="stat-prods">0 รายการ</h3>
+            </div>
+          </div>
+
+          <div id="admin-prod" class="admin-content hide space-y-4">
+            <form onsubmit="handleAddProduct(event)" class="grid grid-cols-1 md:grid-cols-4 gap-2 bg-gray-50 p-3 rounded-xl">
+                <input id="p-name" placeholder="ชื่ออาหาร/สินค้า" required class="p-2 rounded-lg border">
+                <input id="p-price" type="number" placeholder="ราคา" required class="p-2 rounded-lg border">
+                <input id="p-icon" placeholder="อีโมจิ (เช่น 🍔)" required class="p-2 rounded-lg border">
+                <button class="bg-pink-500 text-white rounded-lg font-bold">เพิ่มรายการ</button>
+            </form>
+            <div id="admin-prod-list" class="max-h-60 overflow-auto divide-y"></div>
+          </div>
+
+          <div id="admin-mem" class="admin-content hide space-y-4">
+            <form onsubmit="handleTopup(event)" class="grid grid-cols-1 md:grid-cols-3 gap-2 bg-green-50 p-3 rounded-xl">
+                <select id="topup-user" class="p-2 rounded-lg border"></select>
+                <input id="topup-amt" type="number" placeholder="จำนวนเงินที่เติม" required class="p-2 rounded-lg border">
+                <button class="bg-green-600 text-white rounded-lg font-bold">เติมเงิน</button>
+            </form>
+            <div id="admin-mem-list" class="max-h-60 overflow-auto divide-y"></div>
+          </div>
+
+          <div id="admin-hist" class="admin-content hide">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead><tr class="text-gray-400"><th>เวลา</th><th>ผู้ซื้อ</th><th>รายการ</th><th>ยอดรวม</th></tr></thead>
+                    <tbody id="hist-list" class="divide-y"></tbody>
+                </table>
             </div>
           </div>
         </div>
       </div>
 
       <main class="max-w-7xl mx-auto px-4 py-8">
-        <div id="product-list" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6"></div>
+        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
       </main>
 
-      <div id="cart-drawer" class="hide fixed inset-0 z-50">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="toggleCart()"></div>
-        <div class="absolute right-0 top-0 h-full w-full max-w-sm bg-white shadow-2xl p-6 flex flex-col">
-          <h2 class="text-2xl font-bold mb-6">🛒 ตะกร้าสินค้า</h2>
-          <div id="cart-items" class="flex-1 overflow-auto space-y-3 pr-2"></div>
+      <div id="cart-modal" class="hide fixed inset-0 z-50">
+        <div class="absolute inset-0 bg-black/60" onclick="toggleCart()"></div>
+        <div class="absolute right-0 top-0 h-full w-80 bg-white p-6 flex flex-col">
+          <h2 class="text-xl font-bold mb-4">🛒 ตะกร้าสินค้า</h2>
+          <div id="cart-items" class="flex-1 overflow-auto space-y-2"></div>
           <div class="border-t pt-4 mt-4">
-            <div class="flex justify-between text-2xl font-bold mb-6 text-gray-800">
-              <span>ยอดรวม:</span>
-              <span id="cart-total" class="text-pink-600">0 บาท</span>
-            </div>
-            <button onclick="handleCheckout()" id="checkout-btn" class="w-full btn-primary text-white py-4 rounded-2xl font-bold text-xl shadow-lg">ชำระเงิน</button>
+            <div class="flex justify-between font-bold text-lg mb-4"><span>รวม:</span><span id="cart-total">0</span></div>
+            <button onclick="handleCheckout()" id="btn-pay" class="w-full btn-primary text-white py-3 rounded-xl font-bold">ชำระเงิน</button>
           </div>
         </div>
       </div>
@@ -129,196 +136,179 @@
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbymqDsDwWSayPwsGogUwGxxOvobyvCikp_guq6-B2t2oieilor6p3ETeTatOQYk8Psx/exec";
+    let dbUsers = [], products = [], history = [], currentUser = null, cart = [], isReady = false;
 
-    let dbUsers = [];
-    let products = [];
-    let currentUser = null;
-    let cart = [];
-    let isDataLoaded = false;
-
-    // --- 📥 DATA FETCHING (Background) ---
     async function fetchData() {
       try {
-        const response = await fetch(API_URL);
-        const data = await response.json();
-        dbUsers = data.users;
-        products = data.products;
-        isDataLoaded = true;
-        
-        // ถ้าล็อกอินค้างไว้ให้แอบอัปเดตข้อมูล
-        if (currentUser) {
-            const updatedUser = dbUsers.find(u => String(u.username).trim() === String(currentUser.username).trim());
-            if (updatedUser) {
-                currentUser = updatedUser;
-                document.getElementById('balance-display').innerText = currentUser.balance.toLocaleString();
-            }
-        }
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        dbUsers = data.users; products = data.products; history = data.history;
+        isReady = true;
+        if(currentUser) refreshUserData();
         renderProducts();
-        updateAdminUserSelect();
-      } catch (error) {
-        console.error("Fetch error:", error);
-      }
+        renderAdminSystems();
+      } catch (e) { console.error(e); }
     }
 
-    // --- 🔑 AUTHENTICATION ---
-    function handleLogin(e) {
-      e.preventDefault();
-      if (!isDataLoaded) return showToast("กำลังเชื่อมต่อฐานข้อมูล... โปรดรอสักครู่", "error");
-
-      const uInput = document.getElementById('l-user').value.trim();
-      const pInput = document.getElementById('l-pass').value.trim();
-      
-      const user = dbUsers.find(x => 
-        String(x.username).trim() === String(uInput) && 
-        String(x.password).trim() === String(pInput)
-      );
-      
-      if (user) {
-        currentUser = user;
-        initShop();
-        showToast(`ยินดีต้อนรับคุณ ${user.username}!`);
-      } else {
-        showToast("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง", "error");
-      }
-    }
-
-    async function handleRegister(e) {
-      e.preventDefault();
-      if (!isDataLoaded) return showToast("ระบบยังไม่พร้อม โปรดรอสักครู่", "error");
-      
-      const username = document.getElementById('r-user').value.trim();
-      const password = document.getElementById('r-pass').value.trim();
-      
-      setBtnState('reg-btn', true, "กำลังสมัคร...");
-      try {
-        await fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'register', username, password })
-        });
-        showToast("สมัครสมาชิกสำเร็จ!");
-        location.reload();
-      } catch (err) {
-        showToast("เกิดข้อผิดพลาด", "error");
-        setBtnState('reg-btn', false, "ยืนยันสมัครสมาชิก");
-      }
-    }
-
-    // --- 🛒 SHOP LOGIC ---
-    function initShop() {
-      document.getElementById('auth-page').classList.add('hide');
-      document.getElementById('shop-page').classList.remove('hide');
-      document.getElementById('user-display').innerText = currentUser.username;
-      document.getElementById('balance-display').innerText = currentUser.balance.toLocaleString();
-      document.getElementById('role-badge').innerText = currentUser.role;
-      if(currentUser.role === 'admin') document.getElementById('admin-bar').classList.remove('hide');
-      renderProducts();
+    function refreshUserData() {
+        const u = dbUsers.find(x => x.username === currentUser.username);
+        if(u) { currentUser = u; document.getElementById('balance-display').innerText = u.balance.toLocaleString(); }
     }
 
     function renderProducts() {
-      const container = document.getElementById('product-list');
-      container.innerHTML = products.map(p => `
-        <div class="card-glass rounded-3xl p-6 flex flex-col items-center text-center shadow-lg hover:translate-y-[-5px] transition-all">
-          <div class="text-5xl mb-4 bg-white/50 w-20 h-20 flex items-center justify-center rounded-2xl shadow-inner">${p.icon}</div>
-          <div class="font-bold text-gray-800 text-lg mb-1 truncate w-full">${p.name}</div>
-          <div class="text-pink-600 font-bold text-xl mb-4">${p.price} ฿</div>
-          <button onclick="addToCart(${p.id})" class="w-full bg-pink-500 text-white py-2.5 rounded-xl font-bold hover:bg-pink-600 active:scale-95 transition-all">
-            ใส่ตะกร้า
-          </button>
-        </div>
-      `).join('');
+      document.getElementById('product-grid').innerHTML = products.map(p => `
+        <div class="card-glass rounded-2xl p-4 text-center shadow hover:scale-105 transition-all">
+          <div class="text-4xl mb-2">${p.icon}</div>
+          <div class="font-bold text-sm truncate">${p.name}</div>
+          <div class="text-pink-600 font-bold mb-2">${p.price} ฿</div>
+          <button onclick="addToCart(${p.id})" class="w-full bg-gray-800 text-white py-1 rounded-lg text-xs font-bold">ใส่ตะกร้า</button>
+        </div>`).join('');
     }
 
-    function addToCart(id) {
-      const p = products.find(item => item.id == id);
-      cart.push(p);
-      document.getElementById('cart-count').innerText = cart.length;
-      showToast(`เพิ่ม ${p.name} แล้ว`);
+    function renderAdminSystems() {
+      // Stats
+      document.getElementById('stat-sales').innerText = history.reduce((s, h) => s + Number(h.total), 0).toLocaleString() + " ฿";
+      document.getElementById('stat-users').innerText = dbUsers.length + " คน";
+      document.getElementById('stat-prods').innerText = products.length + " รายการ";
+
+      // Product List (Admin)
+      document.getElementById('admin-prod-list').innerHTML = products.map(p => `
+        <div class="flex justify-between py-2 items-center">
+            <span class="text-sm">${p.icon} ${p.name} (${p.price}฿)</span>
+            <button onclick="deleteProduct(${p.id})" class="text-red-500 text-xs">ลบ</button>
+        </div>`).join('');
+
+      // Member List & Topup Select
+      document.getElementById('topup-user').innerHTML = dbUsers.map(u => `<option value="${u.username}">${u.username}</option>`).join('');
+      document.getElementById('admin-mem-list').innerHTML = dbUsers.map(u => `
+        <div class="flex justify-between py-2 items-center">
+            <span class="text-sm">👤 ${u.username} (${u.balance}฿)</span>
+            <button onclick="deleteUser('${u.username}')" class="text-red-400 text-xs">ลบ</button>
+        </div>`).join('');
+
+      // History
+      document.getElementById('hist-list').innerHTML = history.reverse().map(h => `
+        <tr class="text-xs h-10">
+            <td>${new Date(h.time).toLocaleTimeString()}</td>
+            <td>${h.user}</td>
+            <td class="truncate max-w-[100px]">${h.items}</td>
+            <td class="font-bold text-green-600">${h.total}</td>
+        </tr>`).join('');
     }
 
-    function toggleCart() {
-      document.getElementById('cart-drawer').classList.toggle('hide');
-      renderCartItems();
-    }
-
-    function renderCartItems() {
-      const container = document.getElementById('cart-items');
-      let total = 0;
-      container.innerHTML = cart.length === 0 ? '<p class="text-center text-gray-400 py-10">ตะกร้าว่างเปล่า</p>' : 
-        cart.map((item, index) => {
-          total += Number(item.price);
-          return `<div class="flex items-center justify-between bg-gray-50 p-3 rounded-2xl border border-gray-100">
-              <div class="flex items-center gap-3"><span class="text-2xl">${item.icon}</span><span class="font-bold text-sm text-gray-700">${item.name}</span></div>
-              <div class="flex items-center gap-3"><span class="font-bold text-pink-600">${item.price} ฿</span><button onclick="removeFromCart(${index})" class="text-red-400 font-bold">✕</button></div>
-            </div>`;
-        }).join('');
-      document.getElementById('cart-total').innerText = total.toLocaleString() + " บาท";
-    }
-
-    function removeFromCart(index) {
-      cart.splice(index, 1);
-      renderCartItems();
-      document.getElementById('cart-count').innerText = cart.length;
+    // --- Action Handlers ---
+    async function handleLogin(e) {
+      e.preventDefault();
+      if(!isReady) return showToast("กำลังเชื่อมต่อฐานข้อมูล...");
+      const uInput = document.getElementById('l-user').value.trim();
+      const pInput = document.getElementById('l-pass').value.trim();
+      const user = dbUsers.find(x => String(x.username) === uInput && String(x.password) === pInput);
+      if (user) { currentUser = user; initShop(); } else { showToast("รหัสผ่านไม่ถูกต้อง", "error"); }
     }
 
     async function handleCheckout() {
       const total = cart.reduce((s, i) => s + Number(i.price), 0);
-      if (cart.length === 0) return showToast("กรุณาเลือกสินค้าก่อน", "error");
-      if (Number(currentUser.balance) < total) return showToast("ยอดเงินไม่เพียงพอ", "error");
-
-      setBtnState('checkout-btn', true, "กำลังชำระเงิน...");
-      try {
-        const newBalance = Number(currentUser.balance) - total;
-        await fetch(API_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'updateBalance', username: currentUser.username, newBalance: newBalance })
-        });
-        currentUser.balance = newBalance;
-        cart = [];
-        document.getElementById('cart-count').innerText = 0;
-        document.getElementById('balance-display').innerText = currentUser.balance.toLocaleString();
-        toggleCart();
-        showToast("ชำระเงินเรียบร้อย!", "success");
-        fetchData(); 
-      } catch (err) {
-        showToast("เกิดข้อผิดพลาด", "error");
-      } finally {
-        setBtnState('checkout-btn', false, "ชำระเงิน");
-      }
+      if(currentUser.balance < total) return showToast("เงินไม่พอ!", "error");
+      
+      const itemsStr = cart.map(i => i.name).join(', ');
+      setBtn('btn-pay', true, "กำลังชำระ...");
+      
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ 
+            action: 'checkout', 
+            username: currentUser.username, 
+            newBalance: currentUser.balance - total,
+            items: itemsStr,
+            total: total
+        })
+      });
+      cart = []; updateCartUI(); toggleCart(); showToast("สั่งซื้อสำเร็จ!"); fetchData();
+      setBtn('btn-pay', false, "ชำระเงิน");
     }
 
-    // --- 🛠 UTILS ---
-    function setBtnState(id, isLoading, text) {
-      const btn = document.getElementById(id);
-      if (isLoading) {
-        btn.classList.add('btn-disabled');
-        btn.disabled = true;
-        btn.innerText = text;
-      } else {
-        btn.classList.remove('btn-disabled');
-        btn.disabled = false;
-        btn.innerText = text;
-      }
+    async function handleAddProduct(e) {
+      e.preventDefault();
+      const name = document.getElementById('p-name').value;
+      const price = document.getElementById('p-price').value;
+      const icon = document.getElementById('p-icon').value;
+      await apiAction({action: 'addProduct', name, price, icon});
+      e.target.reset(); fetchData(); showToast("เพิ่มสินค้าแล้ว");
     }
 
-    function switchAuth(mode) {
-      document.getElementById('login-form').classList.toggle('hide', mode === 'reg');
-      document.getElementById('reg-form').classList.toggle('hide', mode === 'login');
-      document.getElementById('tab-l').className = mode === 'login' ? 'flex-1 py-2 rounded-lg font-bold bg-white shadow' : 'flex-1 py-2 rounded-lg font-bold text-gray-400';
-      document.getElementById('tab-r').className = mode === 'reg' ? 'flex-1 py-2 rounded-lg font-bold bg-white shadow' : 'flex-1 py-2 rounded-lg font-bold text-gray-400';
+    async function deleteProduct(id) {
+        if(confirm('ลบสินค้านี้?')) { await apiAction({action: 'deleteProduct', id}); fetchData(); }
     }
 
-    function toggleAdminPanel() { document.getElementById('admin-panel').classList.toggle('hide'); }
-    function updateAdminUserSelect() {
-      document.getElementById('topup-user-select').innerHTML = dbUsers.map(u => `<option value="${u.username}">${u.username} (คงเหลือ: ${u.balance}฿)</option>`).join('');
+    async function handleTopup(e) {
+      e.preventDefault();
+      const user = dbUsers.find(x => x.username === document.getElementById('topup-user').value);
+      const amt = Number(document.getElementById('topup-amt').value);
+      await apiAction({action: 'updateBalance', username: user.username, newBalance: user.balance + amt});
+      showToast("เติมเงินสำเร็จ"); e.target.reset(); fetchData();
     }
 
-    function showToast(msg, type = 'success') {
-      const container = document.getElementById('toast-container');
-      const div = document.createElement('div');
-      div.className = `toast px-6 py-4 rounded-2xl shadow-2xl text-white font-bold flex items-center gap-3 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
-      div.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span> ${msg}`;
-      container.appendChild(div);
-      setTimeout(() => div.remove(), 3000);
+    // --- Helpers ---
+    async function apiAction(data) {
+        await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
+    }
+
+    function initShop() {
+      document.getElementById('auth-page').classList.add('hide');
+      document.getElementById('shop-page').classList.remove('hide');
+      document.getElementById('user-display').innerText = currentUser.username;
+      if(currentUser.role === 'admin') document.getElementById('admin-bar').classList.remove('hide');
+      refreshUserData();
+    }
+
+    function switchAdminTab(tab) {
+        document.querySelectorAll('.admin-content').forEach(el => el.classList.add('hide'));
+        document.querySelectorAll('.admin-tab').forEach(el => el.classList.remove('tab-active'));
+        document.getElementById('admin-' + tab).classList.remove('hide');
+        document.getElementById('btn-' + tab).classList.add('tab-active');
+    }
+
+    function addToCart(id) { 
+        cart.push(products.find(p => p.id == id)); 
+        updateCartUI(); showToast("เพิ่มแล้ว"); 
+    }
+    function updateCartUI() { 
+        document.getElementById('cart-count').innerText = cart.length; 
+    }
+    function toggleCart() {
+      document.getElementById('cart-modal').classList.toggle('hide');
+      let total = 0;
+      document.getElementById('cart-items').innerHTML = cart.map((i, idx) => {
+        total += Number(i.price);
+        return `<div class="flex justify-between text-sm bg-gray-50 p-2 rounded"><span>${i.icon} ${i.name}</span><button onclick="cart.splice(${idx},1);toggleCart();updateCartUI();">✕</button></div>`
+      }).join('');
+      document.getElementById('cart-total').innerText = total + " ฿";
+    }
+
+    function setBtn(id, loading, text) {
+        const b = document.getElementById(id); b.disabled = loading; b.innerText = text; b.style.opacity = loading ? 0.5 : 1;
+    }
+
+    function showToast(m, type="success") {
+      const c = document.getElementById('toast-container');
+      const d = document.createElement('div');
+      d.className = `toast px-6 py-3 rounded-xl shadow-lg text-white font-bold ${type==='success'?'bg-green-500':'bg-red-500'}`;
+      d.innerText = m; c.appendChild(d); setTimeout(()=>d.remove(), 3000);
+    }
+
+    function switchAuth(m) {
+      document.getElementById('login-form').classList.toggle('hide', m==='reg');
+      document.getElementById('reg-form').classList.toggle('hide', m==='login');
+      document.getElementById('tab-l').className = m==='login'?'flex-1 py-2 rounded-lg font-bold bg-white shadow':'flex-1 py-2 rounded-lg font-bold text-gray-400';
+      document.getElementById('tab-r').className = m==='reg'?'flex-1 py-2 rounded-lg font-bold bg-white shadow':'flex-1 py-2 rounded-lg font-bold text-gray-400';
+    }
+    
+    async function handleRegister(e) {
+      e.preventDefault();
+      const username = document.getElementById('r-user').value;
+      const password = document.getElementById('r-pass').value;
+      await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'register', username, password }) });
+      showToast("สมัครสำเร็จ! เข้าระบบได้เลย"); location.reload();
     }
   </script>
 </body>
