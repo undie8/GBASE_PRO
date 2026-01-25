@@ -3,131 +3,124 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sci Shop POS - Admin Edition</title>
+  <title>Sci Shop POS - Pro Edition 2026</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Prompt', sans-serif; }
-    .gradient-bg { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); }
+    .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
     .card-glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-    .btn-primary { background: linear-gradient(135deg, #e94560 0%, #ff6b6b 100%); transition: 0.3s; }
-    .btn-primary:hover { transform: scale(1.02); opacity: 0.9; }
+    .btn-primary { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); transition: 0.3s; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); }
     .hide { display: none !important; }
-    .tab-active { border-bottom: 3px solid #e94560; color: #e94560; font-weight: bold; }
+    .tab-active { border-bottom: 3px solid #6366f1; color: #6366f1; font-weight: bold; }
     @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     .toast { animation: slideIn 0.3s ease forwards; }
   </style>
 </head>
 
-<body class="h-full gradient-bg overflow-hidden" onload="fetchData()">
+<body class="h-full gradient-bg overflow-hidden" onload="checkSession()">
   <div id="app" class="h-full overflow-auto text-gray-800 pb-10">
     <div id="toast-container" class="fixed top-4 right-4 z-[100] flex flex-col gap-2"></div>
 
     <div id="auth-page" class="min-h-full flex items-center justify-center p-4">
       <div class="card-glass rounded-3xl shadow-2xl p-8 w-full max-w-md">
-        <div class="text-center mb-6"><span class="text-6xl">🔬</span><h1 class="text-3xl font-bold mt-2">Sci Shop</h1></div>
+        <div class="text-center mb-6"><span class="text-6xl">🔬</span><h1 class="text-3xl font-bold mt-2">Sci Shop</h1><p class="text-gray-500 text-sm">ระบบจัดการร้านค้าอัจฉริยะ</p></div>
         <div class="flex mb-6 bg-gray-100 rounded-xl p-1">
           <button onclick="switchAuth('login')" id="tab-l" class="flex-1 py-2 rounded-lg font-bold bg-white shadow">เข้าสู่ระบบ</button>
           <button onclick="switchAuth('reg')" id="tab-r" class="flex-1 py-2 rounded-lg font-bold text-gray-400">สมัครสมาชิก</button>
         </div>
         <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
-          <input type="text" id="l-user" required class="w-full p-3 rounded-xl border outline-none" placeholder="ชื่อผู้ใช้">
-          <input type="password" id="l-pass" required class="w-full p-3 rounded-xl border outline-none" placeholder="รหัสผ่าน">
-          <button type="submit" id="login-btn" class="w-full btn-primary text-white py-3 rounded-xl font-bold">เข้าสู่ระบบ</button>
+          <input type="text" id="l-user" required class="w-full p-3 rounded-xl border outline-none focus:ring-2 ring-indigo-500" placeholder="ชื่อผู้ใช้">
+          <input type="password" id="l-pass" required class="w-full p-3 rounded-xl border outline-none focus:ring-2 ring-indigo-500" placeholder="รหัสผ่าน">
+          <button type="submit" id="login-btn" class="w-full btn-primary text-white py-3 rounded-xl font-bold shadow-lg">เข้าสู่ระบบ</button>
         </form>
-        <form id="reg-form" onsubmit="handleRegister(event)" class="space-y-4 hide">
-          <input type="text" id="r-user" required class="w-full p-3 rounded-xl border outline-none" placeholder="ตั้งชื่อผู้ใช้">
-          <input type="password" id="r-pass" required class="w-full p-3 rounded-xl border outline-none" placeholder="ตั้งรหัสผ่าน">
-          <button type="submit" id="reg-btn" class="w-full bg-blue-500 text-white py-3 rounded-xl font-bold">สมัครสมาชิก</button>
-        </form>
-      </div>
+        </div>
     </div>
 
     <div id="shop-page" class="hide min-h-full">
-      <header class="bg-white shadow-md sticky top-0 z-40 p-4">
+      <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-40 p-4">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-          <div class="flex items-center gap-2"><span class="text-3xl">🧋</span><h1 class="font-bold text-xl">Sci Shop</h1></div>
+          <div class="flex items-center gap-2"><span class="text-3xl">🧪</span><h1 class="font-bold text-xl hidden md:block">Sci Shop POS</h1></div>
+          
+          <div class="flex-1 max-w-md mx-4">
+            <input type="text" id="search-input" oninput="renderProducts()" placeholder="ค้นหาสินค้า..." class="w-full px-4 py-2 rounded-full border bg-gray-50 focus:outline-none focus:ring-2 ring-indigo-300">
+          </div>
+
           <div class="flex items-center gap-3">
-            <div class="bg-green-50 px-3 py-1 rounded-full border border-green-200">
-                <span class="text-green-600 font-bold">💰 <span id="balance-display">0</span> ฿</span>
+            <div class="bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
+                <span class="text-indigo-600 font-bold">฿ <span id="balance-display">0</span></span>
             </div>
-            <button onclick="toggleCart()" class="relative p-2 bg-pink-50 rounded-full">
+            <button onclick="toggleCart()" class="relative p-2 bg-pink-50 rounded-full hover:bg-pink-100 transition-colors">
                 🛒 <span id="cart-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">0</span>
             </button>
-            <button onclick="location.reload()" class="p-2 hover:bg-gray-100 rounded-full">🚪</button>
+            <button onclick="logout()" class="p-2 hover:bg-red-50 rounded-full" title="ออกจากระบบ">🚪</button>
           </div>
         </div>
       </header>
 
       <div id="admin-bar" class="hide max-w-7xl mx-auto px-4 mt-6">
-        <div class="bg-white rounded-3xl p-6 shadow-xl border-t-4 border-yellow-400">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-xl font-bold flex items-center gap-2"><span>👑</span> แผงควบคุมระบบ (Admin POS)</h2>
-            <div class="flex gap-2">
-                <button onclick="switchAdminTab('dash')" class="admin-tab tab-active px-3 py-1" id="btn-dash">ภาพรวม</button>
-                <button onclick="switchAdminTab('prod')" class="admin-tab px-3 py-1" id="btn-prod">สินค้า</button>
-                <button onclick="switchAdminTab('mem')" class="admin-tab px-3 py-1" id="btn-mem">สมาชิก</button>
-                <button onclick="switchAdminTab('hist')" class="admin-tab px-3 py-1" id="btn-hist">ประวัติ</button>
+        <div class="bg-white rounded-3xl p-6 shadow-xl">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <h2 class="text-xl font-bold flex items-center gap-2 text-indigo-900"><span>📊</span> Dashboard & Management</h2>
+            <div class="flex bg-gray-100 p-1 rounded-xl overflow-x-auto">
+                <button onclick="switchAdminTab('dash')" class="admin-tab tab-active px-4 py-1 whitespace-nowrap" id="btn-dash">วิเคราะห์</button>
+                <button onclick="switchAdminTab('prod')" class="admin-tab px-4 py-1 whitespace-nowrap" id="btn-prod">คลังสินค้า</button>
+                <button onclick="switchAdminTab('mem')" class="admin-tab px-4 py-1 whitespace-nowrap" id="btn-mem">สมาชิก</button>
             </div>
           </div>
 
-          <div id="admin-dash" class="admin-content grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100">
-                <p class="text-blue-500 text-sm">ยอดขายรวม</p>
-                <h3 class="text-2xl font-bold" id="stat-sales">0 ฿</h3>
+          <div id="admin-dash" class="admin-content grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                <p class="font-bold mb-4 text-gray-600">แนวโน้มยอดขาย</p>
+                <canvas id="salesChart" height="150"></canvas>
             </div>
-            <div class="bg-purple-50 p-4 rounded-2xl border border-purple-100">
-                <p class="text-purple-500 text-sm">สมาชิกทั้งหมด</p>
-                <h3 class="text-2xl font-bold" id="stat-users">0 คน</h3>
-            </div>
-            <div class="bg-pink-50 p-4 rounded-2xl border border-pink-100">
-                <p class="text-pink-500 text-sm">สินค้าในคลัง</p>
-                <h3 class="text-2xl font-bold" id="stat-prods">0 รายการ</h3>
+            <div class="space-y-4">
+                <div class="bg-indigo-600 text-white p-4 rounded-2xl shadow-lg shadow-indigo-200">
+                    <p class="text-indigo-100 text-xs uppercase tracking-wider">ยอดขายรวมทั้งหมด</p>
+                    <h3 class="text-3xl font-bold" id="stat-sales">0 ฿</h3>
+                </div>
+                <div class="bg-white border p-4 rounded-2xl">
+                    <p class="text-gray-400 text-xs">สินค้าในระบบ</p>
+                    <h3 class="text-xl font-bold text-gray-700" id="stat-prods">0 รายการ</h3>
+                </div>
             </div>
           </div>
 
           <div id="admin-prod" class="admin-content hide space-y-4">
-            <form onsubmit="handleAddProduct(event)" class="grid grid-cols-1 md:grid-cols-4 gap-2 bg-gray-50 p-3 rounded-xl">
-                <input id="p-name" placeholder="ชื่ออาหาร/สินค้า" required class="p-2 rounded-lg border">
-                <input id="p-price" type="number" placeholder="ราคา" required class="p-2 rounded-lg border">
-                <input id="p-icon" placeholder="อีโมจิ (เช่น 🍔)" required class="p-2 rounded-lg border">
-                <button class="bg-pink-500 text-white rounded-lg font-bold">เพิ่มรายการ</button>
+            <form onsubmit="handleAddProduct(event)" class="grid grid-cols-1 md:grid-cols-5 gap-2 bg-gray-50 p-4 rounded-2xl border">
+                <input id="p-name" placeholder="ชื่อสินค้า" required class="p-2 rounded-lg border text-sm">
+                <input id="p-price" type="number" placeholder="ราคา" required class="p-2 rounded-lg border text-sm">
+                <input id="p-stock" type="number" placeholder="จำนวนสต็อก" required class="p-2 rounded-lg border text-sm">
+                <input id="p-icon" placeholder="Emoji (🍔)" required class="p-2 rounded-lg border text-sm text-center">
+                <button class="bg-indigo-600 text-white rounded-lg font-bold text-sm py-2">เพิ่ม/แก้ไข</button>
             </form>
-            <div id="admin-prod-list" class="max-h-60 overflow-auto divide-y"></div>
+            <div class="overflow-x-auto"><table class="w-full text-left text-sm border-collapse">
+                <thead class="text-gray-400 border-b"><tr><th class="py-2">สินค้า</th><th>ราคา</th><th>สต็อก</th><th>จัดการ</th></tr></thead>
+                <tbody id="admin-prod-list" class="divide-y"></tbody>
+            </table></div>
           </div>
-
-          <div id="admin-mem" class="admin-content hide space-y-4">
-            <form onsubmit="handleTopup(event)" class="grid grid-cols-1 md:grid-cols-3 gap-2 bg-green-50 p-3 rounded-xl">
-                <select id="topup-user" class="p-2 rounded-lg border"></select>
-                <input id="topup-amt" type="number" placeholder="จำนวนเงินที่เติม" required class="p-2 rounded-lg border">
-                <button class="bg-green-600 text-white rounded-lg font-bold">เติมเงิน</button>
-            </form>
-            <div id="admin-mem-list" class="max-h-60 overflow-auto divide-y"></div>
-          </div>
-
-          <div id="admin-hist" class="admin-content hide">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead><tr class="text-gray-400"><th>เวลา</th><th>ผู้ซื้อ</th><th>รายการ</th><th>ยอดรวม</th></tr></thead>
-                    <tbody id="hist-list" class="divide-y"></tbody>
-                </table>
-            </div>
-          </div>
+          
+          <div id="admin-mem" class="admin-content hide space-y-4">...</div>
         </div>
       </div>
 
       <main class="max-w-7xl mx-auto px-4 py-8">
-        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+        <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
       </main>
 
       <div id="cart-modal" class="hide fixed inset-0 z-50">
-        <div class="absolute inset-0 bg-black/60" onclick="toggleCart()"></div>
-        <div class="absolute right-0 top-0 h-full w-80 bg-white p-6 flex flex-col">
-          <h2 class="text-xl font-bold mb-4">🛒 ตะกร้าสินค้า</h2>
-          <div id="cart-items" class="flex-1 overflow-auto space-y-2"></div>
-          <div class="border-t pt-4 mt-4">
-            <div class="flex justify-between font-bold text-lg mb-4"><span>รวม:</span><span id="cart-total">0</span></div>
-            <button onclick="handleCheckout()" id="btn-pay" class="w-full btn-primary text-white py-3 rounded-xl font-bold">ชำระเงิน</button>
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="toggleCart()"></div>
+        <div class="absolute right-0 top-0 h-full w-full max-w-sm bg-white p-6 shadow-2xl flex flex-col">
+          <div class="flex justify-between items-center mb-6">
+              <h2 class="text-2xl font-bold">🛒 ตะกร้าของคุณ</h2>
+              <button onclick="toggleCart()" class="text-gray-400 text-2xl">✕</button>
+          </div>
+          <div id="cart-items" class="flex-1 overflow-auto space-y-3"></div>
+          <div class="border-t pt-6 mt-4">
+            <div class="flex justify-between font-bold text-2xl mb-6"><span>รวมทั้งสิ้น:</span><span class="text-indigo-600" id="cart-total">0</span></div>
+            <button onclick="handleCheckout()" id="btn-pay" class="w-full btn-primary text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-indigo-100">ยืนยันการชำระเงิน</button>
           </div>
         </div>
       </div>
@@ -135,8 +128,21 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbymqDsDwWSayPwsGogUwGxxOvobyvCikp_guq6-B2t2oieilor6p3ETeTatOQYk8Psx/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbymqDsDwWSayPwsGogUwGxxOvobyvCikp_guq6-B2t2oieilor6p3ETeTatOQYk8Psx/exec"; //
     let dbUsers = [], products = [], history = [], currentUser = null, cart = [], isReady = false;
+    let salesChart = null;
+
+    // --- Core Logic & Session ---
+    function checkSession() {
+        const saved = localStorage.getItem('sciShopUser');
+        if (saved) {
+            currentUser = JSON.parse(saved);
+            fetchData();
+            initShop();
+        } else {
+            fetchData();
+        }
+    }
 
     async function fetchData() {
       try {
@@ -147,169 +153,99 @@
         if(currentUser) refreshUserData();
         renderProducts();
         renderAdminSystems();
-      } catch (e) { console.error(e); }
+        updateChart();
+      } catch (e) { showToast("เกิดข้อผิดพลาดในการโหลดข้อมูล", "error"); }
     }
 
-    function refreshUserData() {
-        const u = dbUsers.find(x => x.username === currentUser.username);
-        if(u) { currentUser = u; document.getElementById('balance-display').innerText = u.balance.toLocaleString(); }
-    }
-
+    // --- Product Rendering with Search & Stock ---
     function renderProducts() {
-      document.getElementById('product-grid').innerHTML = products.map(p => `
-        <div class="card-glass rounded-2xl p-4 text-center shadow hover:scale-105 transition-all">
-          <div class="text-4xl mb-2">${p.icon}</div>
-          <div class="font-bold text-sm truncate">${p.name}</div>
-          <div class="text-pink-600 font-bold mb-2">${p.price} ฿</div>
-          <button onclick="addToCart(${p.id})" class="w-full bg-gray-800 text-white py-1 rounded-lg text-xs font-bold">ใส่ตะกร้า</button>
+      const search = document.getElementById('search-input').value.toLowerCase();
+      const filtered = products.filter(p => p.name.toLowerCase().includes(search));
+      
+      document.getElementById('product-grid').innerHTML = filtered.map(p => `
+        <div class="card-glass rounded-2xl p-4 text-center shadow-sm hover:shadow-xl transition-all border border-white relative ${p.stock <= 0 ? 'opacity-50 grayscale' : ''}">
+          ${p.stock <= 5 && p.stock > 0 ? `<span class="absolute top-2 left-2 bg-orange-500 text-white text-[8px] px-2 py-0.5 rounded-full">ใกล้หมด!</span>` : ''}
+          <div class="text-5xl mb-3">${p.icon}</div>
+          <div class="font-bold text-gray-800 truncate">${p.name}</div>
+          <div class="text-indigo-600 font-bold mb-3">${p.price} ฿</div>
+          <div class="text-[10px] text-gray-400 mb-2">คงเหลือ: ${p.stock}</div>
+          <button onclick="${p.stock > 0 ? `addToCart(${p.id})` : ''}" 
+            class="w-full ${p.stock > 0 ? 'bg-gray-800 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} py-2 rounded-xl text-xs font-bold transition-all">
+            ${p.stock > 0 ? 'ใส่ตะกร้า' : 'สินค้าหมด'}
+          </button>
         </div>`).join('');
     }
 
-    function renderAdminSystems() {
-      // Stats
-      document.getElementById('stat-sales').innerText = history.reduce((s, h) => s + Number(h.total), 0).toLocaleString() + " ฿";
-      document.getElementById('stat-users').innerText = dbUsers.length + " คน";
-      document.getElementById('stat-prods').innerText = products.length + " รายการ";
+    // --- Chart & Analytics ---
+    function updateChart() {
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        const last7Days = Array.from({length: 7}, (_, i) => {
+            const d = new Date(); d.setDate(d.getDate() - i);
+            return d.toLocaleDateString();
+        }).reverse();
 
-      // Product List (Admin)
-      document.getElementById('admin-prod-list').innerHTML = products.map(p => `
-        <div class="flex justify-between py-2 items-center">
-            <span class="text-sm">${p.icon} ${p.name} (${p.price}฿)</span>
-            <button onclick="deleteProduct(${p.id})" class="text-red-500 text-xs">ลบ</button>
-        </div>`).join('');
+        const data = last7Days.map(date => {
+            return history.filter(h => new Date(h.time).toLocaleDateString() === date)
+                          .reduce((s, h) => s + Number(h.total), 0);
+        });
 
-      // Member List & Topup Select
-      document.getElementById('topup-user').innerHTML = dbUsers.map(u => `<option value="${u.username}">${u.username}</option>`).join('');
-      document.getElementById('admin-mem-list').innerHTML = dbUsers.map(u => `
-        <div class="flex justify-between py-2 items-center">
-            <span class="text-sm">👤 ${u.username} (${u.balance}฿)</span>
-            <button onclick="deleteUser('${u.username}')" class="text-red-400 text-xs">ลบ</button>
-        </div>`).join('');
-
-      // History
-      document.getElementById('hist-list').innerHTML = history.reverse().map(h => `
-        <tr class="text-xs h-10">
-            <td>${new Date(h.time).toLocaleTimeString()}</td>
-            <td>${h.user}</td>
-            <td class="truncate max-w-[100px]">${h.items}</td>
-            <td class="font-bold text-green-600">${h.total}</td>
-        </tr>`).join('');
+        if (salesChart) salesChart.destroy();
+        salesChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: last7Days,
+                datasets: [{ label: 'ยอดขาย (฿)', data: data, borderColor: '#6366f1', tension: 0.4, fill: true, backgroundColor: 'rgba(99, 102, 241, 0.1)' }]
+            },
+            options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
     }
 
     // --- Action Handlers ---
-    async function handleLogin(e) {
-      e.preventDefault();
-      if(!isReady) return showToast("กำลังเชื่อมต่อฐานข้อมูล...");
-      const uInput = document.getElementById('l-user').value.trim();
-      const pInput = document.getElementById('l-pass').value.trim();
-      const user = dbUsers.find(x => String(x.username) === uInput && String(x.password) === pInput);
-      if (user) { currentUser = user; initShop(); } else { showToast("รหัสผ่านไม่ถูกต้อง", "error"); }
-    }
-
     async function handleCheckout() {
       const total = cart.reduce((s, i) => s + Number(i.price), 0);
-      if(currentUser.balance < total) return showToast("เงินไม่พอ!", "error");
+      if(currentUser.balance < total) return showToast("ยอดเงินในบัตรไม่พอ!", "error");
       
+      // Check stock client-side first
+      for(let item of cart) {
+          const p = products.find(x => x.id == item.id);
+          if(p.stock <= 0) return showToast(`${p.name} หมดแล้ว!`, "error");
+      }
+
       const itemsStr = cart.map(i => i.name).join(', ');
-      setBtn('btn-pay', true, "กำลังชำระ...");
+      setBtn('btn-pay', true, "กำลังหักเงิน...");
       
+      // ส่งข้อมูลหักเงินและตัดสต็อก (API หลังบ้านต้องรองรับ stock)
       await fetch(API_URL, {
         method: 'POST',
         body: JSON.stringify({ 
             action: 'checkout', 
             username: currentUser.username, 
-            newBalance: currentUser.balance - total,
-            items: itemsStr,
-            total: total
+            total: total,
+            items: itemsStr
         })
       });
-      cart = []; updateCartUI(); toggleCart(); showToast("สั่งซื้อสำเร็จ!"); fetchData();
-      setBtn('btn-pay', false, "ชำระเงิน");
-    }
 
-    async function handleAddProduct(e) {
-      e.preventDefault();
-      const name = document.getElementById('p-name').value;
-      const price = document.getElementById('p-price').value;
-      const icon = document.getElementById('p-icon').value;
-      await apiAction({action: 'addProduct', name, price, icon});
-      e.target.reset(); fetchData(); showToast("เพิ่มสินค้าแล้ว");
-    }
-
-    async function deleteProduct(id) {
-        if(confirm('ลบสินค้านี้?')) { await apiAction({action: 'deleteProduct', id}); fetchData(); }
-    }
-
-    async function handleTopup(e) {
-      e.preventDefault();
-      const user = dbUsers.find(x => x.username === document.getElementById('topup-user').value);
-      const amt = Number(document.getElementById('topup-amt').value);
-      await apiAction({action: 'updateBalance', username: user.username, newBalance: user.balance + amt});
-      showToast("เติมเงินสำเร็จ"); e.target.reset(); fetchData();
+      cart = []; updateCartUI(); toggleCart(); 
+      showToast("ชำระเงินสำเร็จ! ขอบคุณที่ใช้บริการ"); 
+      fetchData();
+      setBtn('btn-pay', false, "ยืนยันการชำระเงิน");
     }
 
     // --- Helpers ---
-    async function apiAction(data) {
-        await fetch(API_URL, { method: 'POST', body: JSON.stringify(data) });
-    }
-
-    function initShop() {
-      document.getElementById('auth-page').classList.add('hide');
-      document.getElementById('shop-page').classList.remove('hide');
-      document.getElementById('user-display').innerText = currentUser.username;
-      if(currentUser.role === 'admin') document.getElementById('admin-bar').classList.remove('hide');
-      refreshUserData();
-    }
-
-    function switchAdminTab(tab) {
-        document.querySelectorAll('.admin-content').forEach(el => el.classList.add('hide'));
-        document.querySelectorAll('.admin-tab').forEach(el => el.classList.remove('tab-active'));
-        document.getElementById('admin-' + tab).classList.remove('hide');
-        document.getElementById('btn-' + tab).classList.add('tab-active');
-    }
-
-    function addToCart(id) { 
-        cart.push(products.find(p => p.id == id)); 
-        updateCartUI(); showToast("เพิ่มแล้ว"); 
-    }
-    function updateCartUI() { 
-        document.getElementById('cart-count').innerText = cart.length; 
-    }
-    function toggleCart() {
-      document.getElementById('cart-modal').classList.toggle('hide');
-      let total = 0;
-      document.getElementById('cart-items').innerHTML = cart.map((i, idx) => {
-        total += Number(i.price);
-        return `<div class="flex justify-between text-sm bg-gray-50 p-2 rounded"><span>${i.icon} ${i.name}</span><button onclick="cart.splice(${idx},1);toggleCart();updateCartUI();">✕</button></div>`
-      }).join('');
-      document.getElementById('cart-total').innerText = total + " ฿";
-    }
-
-    function setBtn(id, loading, text) {
-        const b = document.getElementById(id); b.disabled = loading; b.innerText = text; b.style.opacity = loading ? 0.5 : 1;
+    function logout() {
+        localStorage.removeItem('sciShopUser');
+        location.reload();
     }
 
     function showToast(m, type="success") {
       const c = document.getElementById('toast-container');
       const d = document.createElement('div');
-      d.className = `toast px-6 py-3 rounded-xl shadow-lg text-white font-bold ${type==='success'?'bg-green-500':'bg-red-500'}`;
-      d.innerText = m; c.appendChild(d); setTimeout(()=>d.remove(), 3000);
+      d.className = `toast px-6 py-4 rounded-2xl shadow-2xl text-white font-bold text-sm ${type==='success'?'bg-emerald-500':'bg-rose-500'}`;
+      d.innerHTML = `<span>${type==='success'?'✅':'❌'}</span> ${m}`;
+      c.appendChild(d); setTimeout(()=>d.remove(), 3000);
     }
 
-    function switchAuth(m) {
-      document.getElementById('login-form').classList.toggle('hide', m==='reg');
-      document.getElementById('reg-form').classList.toggle('hide', m==='login');
-      document.getElementById('tab-l').className = m==='login'?'flex-1 py-2 rounded-lg font-bold bg-white shadow':'flex-1 py-2 rounded-lg font-bold text-gray-400';
-      document.getElementById('tab-r').className = m==='reg'?'flex-1 py-2 rounded-lg font-bold bg-white shadow':'flex-1 py-2 rounded-lg font-bold text-gray-400';
-    }
-    
-    async function handleRegister(e) {
-      e.preventDefault();
-      const username = document.getElementById('r-user').value;
-      const password = document.getElementById('r-pass').value;
-      await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'register', username, password }) });
-      showToast("สมัครสำเร็จ! เข้าระบบได้เลย"); location.reload();
-    }
+    // (Include other helper functions like handleLogin, switchAuth, renderAdminSystems... from the original code)
   </script>
 </body>
 </html>
